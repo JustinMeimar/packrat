@@ -74,3 +74,32 @@ fn test_task_entry_manager() {
     assert_eq!(tm.get_all_entries().len(), 2); 
 }
 
+
+#[test]
+fn test_truncate() {
+
+    let db_path = TempDir::new().unwrap().path().join("test.db");
+    let tm = TaskManager::new(db_path.to_str().unwrap());
+    
+    tm.truncate(); 
+    assert_eq!(tm.get_tasks().len(), 0);
+    
+    let task1 = tm.create_task(
+        String::from("run"),
+        String::from("run around the block")
+    );
+    let task2 = tm.create_task(
+        String::from("swim"),
+        String::from("swim in the pool")
+    );
+
+    tm.create_task_entry(task1.id, String::from("did 2 laps")
+        .into_bytes());
+    tm.create_task_entry(task1.id, String::from("went in fast lane")
+        .into_bytes());
+ 
+    tm.truncate();
+    assert_eq!(tm.get_all_entries().len(), 0); 
+    assert_eq!(tm.get_tasks().len(), 0); 
+}
+

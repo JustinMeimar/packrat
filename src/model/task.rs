@@ -40,7 +40,7 @@ impl TaskManager {
     ///
     pub fn get_tasks(&self) -> Vec<Task> {
         
-        self._get_prefix(String::from("task"))
+        self._get_prefix(String::from("task:"))
     }
 
     ///
@@ -64,6 +64,18 @@ impl TaskManager {
     ///
     pub fn truncate(&self) {
         self.db.clear().unwrap();
+        self.db.flush().unwrap();
+    }
+
+    ///
+    pub fn debug_dump(&self) {
+        for entry in self.db.iter() {
+            if let Ok((key, value)) = entry {
+                let key_str = String::from_utf8_lossy(&key);
+                let value_str = String::from_utf8_lossy(&value);
+                println!("Key: {}, Value: {}", key_str, value_str);
+            }
+        }
     }
 
     ///////////////////////////////////////////////////////
@@ -119,8 +131,17 @@ impl BytesConvertible for Task {
     }
 
     fn from_bytes(bytes: &[u8]) -> Self {
-        serde_json::from_slice(bytes).unwrap()
+            match serde_json::from_slice(bytes) {
+                Ok(task_entry) => task_entry,
+                Err(err) => {
+                    panic!("Failed to deserialize Task: {}. Raw data: {:?}", err, bytes);
+                }
+        }
     }
+
+    // fn from_bytes(bytes: &[u8]) -> Self {
+    //     serde_json::from_slice(bytes).unwrap()
+    // }
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug)]
@@ -149,8 +170,18 @@ impl BytesConvertible for TaskEntry {
         serde_json::to_vec(self).unwrap() 
     }
 
+    // fn from_bytes(bytes: &[u8]) -> Self {
+    //     serde_json::from_slice(bytes).unwrap()
+    // }
+
     fn from_bytes(bytes: &[u8]) -> Self {
-        serde_json::from_slice(bytes).unwrap()
+        match serde_json::from_slice(bytes) {
+            Ok(task_entry) => task_entry,
+            Err(err) => {
+                panic!("Failed to deserialize TaskEntry: {}. Raw data: {:?}", err, bytes);
+            }
+        }
     }
+
 }
 

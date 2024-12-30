@@ -25,6 +25,11 @@ use crate::ui::terminal::{TerminalState, UserAction};
 ///////////////////////////////////////////////////////////
 
 pub fn render_main_view(state: &mut TerminalState) -> UserAction { 
+    
+    // set the number of selection options for main view
+    state.select_n = state.db.get_tasks().len();
+    
+    // render indefinitely
     loop {
         if let Ok(action) = _render_view(
             state,
@@ -54,7 +59,7 @@ fn _render_view<F, G>(
     state: &mut TerminalState,
     mut draw_fn: F,
     mut control_fn: G
-) -> Result<(UserAction), std::io::Error>
+) -> Result<UserAction, std::io::Error>
 
 where F: FnMut(
             &mut Terminal<CrosstermBackend<Stdout>>,
@@ -100,9 +105,12 @@ fn _sleep(time: u64) {
 
 fn draw_main_view(
     terminal: &mut Terminal<CrosstermBackend<Stdout>>,
-    _state: &mut TerminalState,
+    state: &mut TerminalState,
 ) {
-    let widgets = vec![term_user_action_list()];
+    let widgets = vec![
+        term_user_action_list(),
+        term_user_task_list(state),
+    ];
     terminal
         .draw(|f| {
             let chunks = term_default_layout().split(f.size());
@@ -115,9 +123,12 @@ fn draw_main_view(
 
 fn draw_task_view(
     terminal: &mut Terminal<CrosstermBackend<Stdout>>,
-    _state: &mut TerminalState,
+    state: &mut TerminalState,
 ) {
-    let widgets = vec![term_user_action_list()];
+    let widgets = vec![
+        term_user_action_list(),
+        term_user_task_list(state),
+    ];
     terminal
         .draw(|f| {
             let chunks = term_default_layout().split(f.size());
@@ -128,14 +139,27 @@ fn draw_task_view(
         .unwrap();
 }
 
-fn control_handler_main(_state: &mut TerminalState) -> UserAction {
+fn control_handler_main(state: &mut TerminalState) -> UserAction {
     
     match event::read().unwrap() {  
+        
         Event::Key(KeyEvent { code: KeyCode::Char('q') | KeyCode::Char('e'), .. }) 
             => UserAction::Quit, 
+        
         Event::Key(KeyEvent { code: KeyCode::Char('s') | KeyCode::Enter, .. })
             => UserAction::Select, 
-         _ 
+        
+        Event::Key(KeyEvent { code: KeyCode::Char('j') | KeyCode::Down, .. })
+            => { 
+                state.select_idx = (state.select_idx + state.select_n + 1) % state.select_n;
+                UserAction::None
+            }, 
+        
+        Event::Key(KeyEvent { code: KeyCode::Char('k') | KeyCode::Up, .. })
+            => { 
+                state.select_idx = (state.select_idx + state.select_n - 1) % state.select_n;
+                UserAction::None
+            }, _ 
             => UserAction::None,
     }
 }
@@ -166,19 +190,19 @@ fn term_user_action_list() -> List<'static> {
 
 ///
 /// 
-// fn term_user_task_list(task_idx: usize) -> List<'static> {
-//     
-//     // TaskManager::get 
-//     // let task_items: Vec<ListItem> = config.get_tasks()
-//     //     .iter()
-//     //     .enumerate()
-//     //     .map(|(i, task)| style_list_item(task.to_string(), task_idx, i)) 
-//     //     .collect();
-//     //
-//     // List::new(task_items)
-//     //     .block(Block::default().title("Tasks").borders(Borders::ALL))
-//     //     .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
-// }
+fn term_user_task_list(state: &mut TerminalState) -> List<'static> {
+    
+    let task_list: Vec<ListItem> = state.db.get_tasks()
+        .iter()
+        .enumerate()
+        .map(|(i, task)| style_list_item(&task.name, state.select_idx, i))
+        .collect();
+
+
+    List::new(task_list)
+        .block(Block::default().title("Tasks").borders(Borders::ALL))
+        .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
+}
 
 ///
 /// 
@@ -196,18 +220,17 @@ fn term_user_action_list() -> List<'static> {
 // }
 
 ///
-/// 
-fn style_list_item(
-    item_text: String,
-    selection_idx: usize,
-    map_idx: usize
-) -> ListItem<'static> {
 
+fn style_list_item(
+    item_text: &str, // Accept a string slice
+    selection_idx: usize,
+    map_idx: usize,
+) -> ListItem<'static> {
     let style = if selection_idx == map_idx {
         Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
     } else {
         Style::default()
     };
-    ListItem::new(Spans::from(Span::styled(item_text, style)))
+    ListItem::new(Spans::from(Span::styled(item_text.to_string(), style)))
 }
 

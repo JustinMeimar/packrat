@@ -34,14 +34,16 @@ enum AppState {
 }
 
 pub struct TerminalState { 
-    select_idx: usize,
-    db: TaskManager,
+    pub select_idx: usize,  // index of current selection
+    pub select_n: usize,    // number of selections
+    pub db: TaskManager,
 }
 
 impl TerminalState {
     pub fn new(db: TaskManager) -> Self {
         TerminalState {
             select_idx: 0,
+            select_n: 0,
             db,
         }
     }
