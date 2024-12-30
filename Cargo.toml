@@ -1,9 +1,14 @@
 [package]
-name = "personal-packrat"
+name = "packrat"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "packrat"
+path = "src/lib.rs"
+
 [dependencies]
+chrono = { version = "0.4.39", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"]}
 sled = "0.34.7"
 uuid = { version = "1.11.0", features = ["v4", "serde"]}
