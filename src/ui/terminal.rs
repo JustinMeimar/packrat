@@ -1,5 +1,5 @@
 use std::io;
-use crate::ui::lib::{render_main_view, render_task_view};
+use crate::ui::render::{render_main_view, render_task_view};
 use crate::model::task::{TaskManager, Task, TaskEntry};
 
 ///////////////////////////////////////////////////////////

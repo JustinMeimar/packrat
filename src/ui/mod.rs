@@ -1,3 +1,3 @@
 pub mod terminal;
-pub mod lib;
+pub mod render;
 
