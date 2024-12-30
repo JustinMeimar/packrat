@@ -1,5 +1,6 @@
 use std::io;
 use crate::ui::lib::{render_main_view, render_task_view};
+use crate::model::task::TaskManager;
 
 ///////////////////////////////////////////////////////////
 
@@ -7,7 +8,8 @@ use crate::ui::lib::{render_main_view, render_task_view};
 pub enum UserAction {
     Select,
     Back,
-    Quit
+    Quit,
+    None,
 }
 
 impl UserAction {
@@ -15,7 +17,8 @@ impl UserAction {
         vec![
             UserAction::Select,
             UserAction::Back,
-            UserAction::Quit
+            UserAction::Quit,
+            UserAction::None,
         ]
     } 
     pub fn from_index(index: usize) -> Self {
@@ -31,19 +34,25 @@ enum AppState {
 }
 
 pub struct TerminalState { 
-    select_idx: usize
+    select_idx: usize,
+    db: TaskManager,
 }
 
 impl TerminalState {
-    pub fn new() -> Self { TerminalState { select_idx: 0 }}
+    pub fn new(db: TaskManager) -> Self {
+        TerminalState {
+            select_idx: 0,
+            db,
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////
 
-pub fn start() -> Result<(), io::Error> {
+pub fn start(db: TaskManager) -> Result<(), io::Error> {
     
     let mut app_state = AppState::MainMenu;
-    let mut term_state = TerminalState::new();
+    let mut term_state = TerminalState::new(db);
 
     loop { 
         app_state = match app_state { 
@@ -64,6 +73,7 @@ fn run_view_main(state: &mut TerminalState) -> Result<AppState, io::Error> {
         UserAction::Select => Ok(AppState::ViewTask),
         UserAction::Quit => Ok(AppState::Done),
         UserAction::Back => Ok(AppState::Done), // back from main => quit
+        _ => Ok(AppState::MainMenu) // stay
     }
 }
 
