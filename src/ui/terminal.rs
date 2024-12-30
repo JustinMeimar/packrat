@@ -1,7 +1,10 @@
 use std::io;
+use crate::ui::lib::{render_main_view, render_task_view};
+
+///////////////////////////////////////////////////////////
 
 #[derive(Clone, Debug)]
-enum UserAction {
+pub enum UserAction {
     Select,
     Back,
     Quit
@@ -27,7 +30,7 @@ enum AppState {
     Done,
 }
 
-struct TerminalState { 
+pub struct TerminalState { 
     select_idx: usize
 }
 
@@ -35,29 +38,7 @@ impl TerminalState {
     pub fn new() -> Self { TerminalState { select_idx: 0 }}
 }
 
-
-fn run_view_main(state: &mut TerminalState) -> Result<AppState, io::Error> {
-    
-    let input = 1;
-    match input {
-        1 => Ok(AppState::MainMenu),
-        2 => Ok(AppState::Done),
-        _ => Ok(AppState::ViewTask),
-    }
-}
-
-
-
-fn run_view_task(state: &mut TerminalState) -> Result<AppState, io::Error> {
-    
-    let input = 1;
-    match input {
-        1 => Ok(AppState::MainMenu),
-        2 => Ok(AppState::Done),
-        _ => Ok(AppState::ViewTask),
-    }
-}
-
+///////////////////////////////////////////////////////////
 
 pub fn start() -> Result<(), io::Error> {
     
@@ -73,5 +54,26 @@ pub fn start() -> Result<(), io::Error> {
         }
     }
     Ok(())
+}
+
+///////////////////////////////////////////////////////////
+
+fn run_view_main(state: &mut TerminalState) -> Result<AppState, io::Error> {
+    
+    match render_main_view(state) {
+        UserAction::Select => Ok(AppState::ViewTask),
+        UserAction::Quit => Ok(AppState::Done),
+        UserAction::Back => Ok(AppState::Done), // back from main => quit
+    }
+}
+
+fn run_view_task(state: &mut TerminalState) -> Result<AppState, io::Error> {
+    
+    let input = 1;
+    match input {
+        1 => Ok(AppState::MainMenu),
+        2 => Ok(AppState::Done),
+        _ => Ok(AppState::ViewTask),
+    }
 }
 
