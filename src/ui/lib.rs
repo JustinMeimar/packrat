@@ -27,7 +27,7 @@ use crate::ui::terminal::{TerminalState, UserAction};
 pub fn render_main_view(state: &mut TerminalState) -> UserAction { 
     
     // set the number of selection options for main view
-    state.select_n = state.db.get_tasks().len();
+    state.select.len = state.db.get_tasks().len();
     
     // render indefinitely
     loop {
@@ -151,15 +151,16 @@ fn control_handler_main(state: &mut TerminalState) -> UserAction {
         
         Event::Key(KeyEvent { code: KeyCode::Char('j') | KeyCode::Down, .. })
             => { 
-                state.select_idx = (state.select_idx + state.select_n + 1) % state.select_n;
+                state.select.decr();
                 UserAction::None
             }, 
         
         Event::Key(KeyEvent { code: KeyCode::Char('k') | KeyCode::Up, .. })
             => { 
-                state.select_idx = (state.select_idx + state.select_n - 1) % state.select_n;
+                state.select.incr();
                 UserAction::None
-            }, _ 
+            },
+        _ 
             => UserAction::None,
     }
 }
@@ -195,7 +196,7 @@ fn term_user_task_list(state: &mut TerminalState) -> List<'static> {
     let task_list: Vec<ListItem> = state.db.get_tasks()
         .iter()
         .enumerate()
-        .map(|(i, task)| style_list_item(&task.name, state.select_idx, i))
+        .map(|(i, task)| style_list_item(&task.name, state.select.idx, i))
         .collect();
 
 

@@ -33,17 +33,32 @@ enum AppState {
     Done,
 }
 
+pub struct TerminalSelection {
+    pub idx: usize,  // index of current selection
+    pub len: usize,  // number of selections
+}
+
+impl TerminalSelection {
+    pub fn new() -> Self { TerminalSelection {idx: 0, len: 0} }
+    
+    pub fn incr(&mut self) {
+        self.idx = (self.idx + self.len - 1) % self.len;
+    }
+
+    pub fn decr(&mut self) {
+        self.idx = (self.idx + self.len + 1) % self.len;
+    }
+}
 pub struct TerminalState { 
-    pub select_idx: usize,  // index of current selection
-    pub select_n: usize,    // number of selections
     pub db: TaskManager,
+    pub select: TerminalSelection
 }
 
 impl TerminalState {
+    
     pub fn new(db: TaskManager) -> Self {
         TerminalState {
-            select_idx: 0,
-            select_n: 0,
+            select: TerminalSelection::new(),
             db,
         }
     }
