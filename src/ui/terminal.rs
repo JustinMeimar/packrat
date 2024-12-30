@@ -1,12 +1,17 @@
 use std::io;
 use crate::ui::lib::{render_main_view, render_task_view};
-use crate::model::task::TaskManager;
+use crate::model::task::{TaskManager, Task, TaskEntry};
 
 ///////////////////////////////////////////////////////////
+#[derive(Clone, Debug)]
+pub enum SelectedItem {
+    Task(Task),
+    TaskEntry(TaskEntry),
+}
 
 #[derive(Clone, Debug)]
 pub enum UserAction {
-    Select,
+    Select(SelectedItem),
     Back,
     Quit,
     None,
@@ -15,7 +20,6 @@ pub enum UserAction {
 impl UserAction {
     pub fn all() -> Vec<UserAction> {
         vec![
-            UserAction::Select,
             UserAction::Back,
             UserAction::Quit,
             UserAction::None,
@@ -36,10 +40,11 @@ enum AppState {
 pub struct TerminalSelection {
     pub idx: usize,  // index of current selection
     pub len: usize,  // number of selections
+    pub item: Option<SelectedItem>
 }
 
 impl TerminalSelection {
-    pub fn new() -> Self { TerminalSelection {idx: 0, len: 0} }
+    pub fn new() -> Self { TerminalSelection {idx: 0, len: 0, item: None} }
     
     pub fn incr(&mut self) {
         self.idx = (self.idx + self.len - 1) % self.len;
@@ -86,21 +91,25 @@ pub fn start(db: TaskManager) -> Result<(), io::Error> {
 
 fn run_view_main(state: &mut TerminalState) -> Result<AppState, io::Error> {
     
-    match render_main_view(state) {
-        UserAction::Select => Ok(AppState::ViewTask),
+    let action = render_main_view(state);
+    match action {
+        UserAction::Select(s) => {
+            state.select.item = Some(s); 
+            Ok(AppState::ViewTask)
+        },
         UserAction::Quit => Ok(AppState::Done),
-        UserAction::Back => Ok(AppState::Done), // back from main => quit
-        _ => Ok(AppState::MainMenu) // stay
-    }
+        UserAction::Back => Ok(AppState::Done),
+        _ => Ok(AppState::MainMenu)
+    } 
 }
 
 fn run_view_task(state: &mut TerminalState) -> Result<AppState, io::Error> {
     
-    let input = 1;
-    match input {
-        1 => Ok(AppState::MainMenu),
-        2 => Ok(AppState::Done),
-        _ => Ok(AppState::ViewTask),
+    match render_task_view(state) {
+        UserAction::Select(SelectedItem::TaskEntry(_)) => Ok(AppState::Editor),
+        UserAction::Quit => Ok(AppState::Done),
+        UserAction::Back => Ok(AppState::MainMenu),
+        _ => Ok(AppState::ViewTask) // stay
     }
 }
 

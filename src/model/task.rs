@@ -110,7 +110,7 @@ pub trait BytesConvertible: Sized {
     fn to_bytes(&self) -> Vec<u8>;
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Eq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone)]
 pub struct Task {
     pub id: uuid::Uuid,
     pub name: String,
@@ -144,7 +144,7 @@ impl BytesConvertible for Task {
     // }
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Eq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone)]
 pub struct TaskEntry {
     pub id: uuid::Uuid,
     pub task_id: uuid::Uuid,

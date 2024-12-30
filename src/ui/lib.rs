@@ -20,7 +20,7 @@ use tui::{
 
 use crate::model::task::Task;
 use crate::model::task::TaskManager;
-use crate::ui::terminal::{TerminalState, UserAction};
+use crate::ui::terminal::{TerminalState, UserAction, SelectedItem};
 
 ///////////////////////////////////////////////////////////
 
@@ -84,7 +84,7 @@ where F: FnMut(
         draw_fn(&mut terminal, state);  
         action = control_fn(state);
         match action {
-            UserAction::Select | UserAction::Back | UserAction::Quit => break,
+            UserAction::Select(_) | UserAction::Back | UserAction::Quit => break,
             _ => continue
         };
     }
@@ -127,7 +127,7 @@ fn draw_task_view(
 ) {
     let widgets = vec![
         term_user_action_list(),
-        term_user_task_list(state),
+        term_task_entries_list(state),
     ];
     terminal
         .draw(|f| {
@@ -147,7 +147,11 @@ fn control_handler_main(state: &mut TerminalState) -> UserAction {
             => UserAction::Quit, 
         
         Event::Key(KeyEvent { code: KeyCode::Char('s') | KeyCode::Enter, .. })
-            => UserAction::Select, 
+            => {
+                let tasks = state.db.get_tasks();
+                let selected_task = tasks[state.select.idx].clone(); 
+                UserAction::Select(SelectedItem::Task(selected_task))
+            } 
         
         Event::Key(KeyEvent { code: KeyCode::Char('j') | KeyCode::Down, .. })
             => { 
@@ -207,18 +211,23 @@ fn term_user_task_list(state: &mut TerminalState) -> List<'static> {
 
 ///
 /// 
-// fn term_task_entries_list(task: &Task, entry_idx: usize) -> List<'static> {
-//     
-//     // let task_entries: Vec<ListItem> = task.get_entries()
-//     //     .iter()
-//     //     .enumerate()
-//     //     .map(|(i, entry)| style_list_item(entry.date.to_string(), entry_idx, i))
-//     //     .collect();
-//     //
-//     // List::new(task_entries)
-//     //     .block(Block::default().title("Entries").borders(Borders::ALL))
-//     //     .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
-// }
+fn term_task_entries_list(state: &mut TerminalState) -> List<'static> {
+    
+    let task = match state.select.item.as_ref() {
+        Some(SelectedItem::Task(t)) => t,   
+        _ => panic!("No item is currently selected!")
+    };
+
+    let task_list: Vec<ListItem> = state.db.get_task_entries(task.id)
+        .iter()
+        .enumerate()
+        .map(|(i, entry)| style_list_item(&entry.id.to_string(), state.select.idx, i))
+        .collect();
+
+    List::new(task_list)
+        .block(Block::default().title("Task Entries!").borders(Borders::ALL))
+        .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
+}
 
 ///
 
