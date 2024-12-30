@@ -24,6 +24,13 @@ impl TaskManager {
         task
     }
     
+    pub fn create_task_entry(&self, task_id: Uuid, content: Vec<u8>) -> TaskEntry {
+        let task_entry = TaskEntry::new(task_id, content);
+        let key = format!("task_entry:{}:{}", task_id, task_entry.id);
+        self.db.insert(key, task_entry.to_bytes()).unwrap();
+        task_entry 
+    }
+
     ///
     pub fn get_task(&self, task_id: Uuid) -> Option<Task> {
 
@@ -41,10 +48,22 @@ impl TaskManager {
 
         self._get(format!("task_entry:{}:{}", task_id, entry_id))
     }
+    
+    ///
+    pub fn get_task_entries(&self, task_id: Uuid) -> Vec<TaskEntry> {
 
-    pub fn get_task_entries(&self) -> Vec<TaskEntry> {
+        self._get_prefix(format!("task_entry:{}", task_id))
+    }
+    
+    ///
+    pub fn get_all_entries(&self) -> Vec<TaskEntry> {
 
         self._get_prefix(String::from("task_entry")) 
+    }
+    
+    ///
+    pub fn truncate(&self) {
+        self.db.clear().unwrap();
     }
 
     ///////////////////////////////////////////////////////
@@ -106,15 +125,15 @@ impl BytesConvertible for Task {
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug)]
 pub struct TaskEntry {
-    id: uuid::Uuid,
-    task_id: uuid::Uuid,
-    content: String,
+    pub id: uuid::Uuid,
+    pub task_id: uuid::Uuid,
+    pub content: Vec<u8>,
     timestamp: DateTime<Utc>,
 }
 
 impl TaskEntry {
      
-    pub fn new(task_id: Uuid, content: String) -> Self {
+    pub fn new(task_id: Uuid, content: Vec<u8>) -> Self {
         TaskEntry {
             id: Uuid::new_v4(),
             task_id,
@@ -134,5 +153,4 @@ impl BytesConvertible for TaskEntry {
         serde_json::from_slice(bytes).unwrap()
     }
 }
-
 
