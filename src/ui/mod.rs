@@ -4,4 +4,4 @@ pub mod state;
 pub mod control;
 pub mod render;
 pub mod editor;
-pub mod render_lib;
+pub mod widgets;

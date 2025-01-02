@@ -16,7 +16,7 @@ use tui::{
 use crate::{model::task::TaskManager, ui::view::{Transition, View}};
 use crate::ui::state::{TaskViewState, MainViewState, EntryViewState};
 use crate::ui::control::Controlable;
-use crate::ui::render_lib::{
+use crate::ui::widgets::{
     term_default_layout,
     term_user_action_list,
 };
