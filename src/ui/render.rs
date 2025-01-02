@@ -1,5 +1,6 @@
 use std::io;
-use std::io::Stdout;
+use std::io::{Stdout, Write, Read};
+use std::fs::File;
 use crossterm::{
     event::{self, Event, KeyCode, KeyEvent},
     execute,
@@ -13,15 +14,19 @@ use tui::{
     widgets::{Block, Borders, List, ListItem, Paragraph, Table, Row},
     Terminal,
 };
-use crate::{model::task::TaskManager, ui::view::{Transition, View}};
+use tempfile::NamedTempFile;
+use crate::ui::view::{Transition, View};
 use crate::ui::state::{TaskViewState, MainViewState, EntryViewState};
 use crate::ui::control::Controlable;
 use crate::ui::widgets::{
     term_default_layout,
     term_user_action_list,
 };
-use crate::model::task::{Task, TaskEntry};
 use super::state::SelectionState;
+use crate::model::task::Task;
+use crate::model::task_entry::TaskEntry;
+use crate::model::task_manager::TaskManager;
+use std::process::Command;
 
 ///////////////////////////////////////////////////////////
 
@@ -35,10 +40,43 @@ pub trait Renderable {
 
 impl Renderable for EntryViewState {
     fn render(&mut self) -> io::Result<Transition> {
-        loop {
-            println!("Open Neovim!") 
-        } 
-        Ok(Transition::Stay)
+        
+        // get the contents of selected task entry
+        let content = &self.task_entry.content;
+        
+        // open a temporary file 
+        let mut tmp_file = NamedTempFile::new()
+            .map_err(|e| format!("Failed to create tmpfile: {}", e))
+            .unwrap();
+        
+        // write the contents into the file 
+        tmp_file
+            .write_all(&content)
+            .map_err(|e| format!("Failed to write to temp file: {}", e));
+
+        // open the editor
+        let status = Command::new("nvim")
+            .arg(tmp_file.path())
+            .status()
+            .expect("Failed to open editor");
+
+        if !status.success() {
+            eprintln!("Neovim exited with an error."); 
+        }
+
+        // read the contents back
+        let mut content_updated = String::new();
+        File::open(&tmp_file)?
+            .read_to_string(&mut content_updated)?;
+
+        // synchronize the updates
+        println!("Updated: {}", content_updated);
+        
+        //    
+        // loop {
+        //     println!("Open Neovim!") 
+        // } 
+        Ok(Transition::Pop)
     }
 }
 
@@ -157,7 +195,7 @@ fn term_user_task_entries_list(tasks: &Vec<TaskEntry>, idx: usize) -> List<'stat
     let task_list: Vec<ListItem> = tasks
         .iter()
         .enumerate()
-        .map(|(i, entry)| style_list_item(&entry.id.to_string(), idx, i))
+        .map(|(i, entry)| style_list_item(&entry.to_string(), idx, i))
         .collect();
 
 

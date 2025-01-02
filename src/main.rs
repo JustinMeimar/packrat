@@ -1,9 +1,16 @@
-use packrat::model::task::{Task, TaskManager};
-use packrat::ui::terminal;
-use packrat::ui::view;
+/// main.rs
+
 use std::io;
 use std::time::Duration;
 use std::thread;
+use packrat::model::task::Task;
+use packrat::model::task_manager::TaskManager;
+use packrat::model::task_entry::TaskEntry;
+use packrat::model::convert::BytesConvertible;
+use packrat::ui::terminal;
+use packrat::ui::view;
+
+///////////////////////////////////////////////////////////
 
 fn add_dummy_tasks() {
 
@@ -22,13 +29,12 @@ fn add_dummy_tasks() {
 }
 
 fn main() -> Result<(), io::Error>  {
-    
-    // open database
-    // let db_path = "./scratch/patrack.db";
-    // let db = TaskManager::new(db_path);
-    
+     
     // remove previous dummy data
-    TaskManager::instance().lock().unwrap().truncate(); 
+    TaskManager::instance()
+        .lock()
+        .unwrap()
+        .truncate(); 
 
     // populate some tasks
     add_dummy_tasks(); 

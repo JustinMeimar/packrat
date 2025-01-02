@@ -1,4 +1,7 @@
-use packrat::model::task::{Task, TaskManager, BytesConvertible};
+use packrat::model::convert::BytesConvertible;
+use packrat::model::task::Task;
+use packrat::model::task_entry::TaskEntry;
+use packrat::model::task_manager::TaskManager;
 use tempfile::TempDir;
 
 #[test]

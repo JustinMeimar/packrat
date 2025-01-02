@@ -1,4 +1,8 @@
-use crate::model::task::{TaskManager, Task, TaskEntry};
+/// state.rs
+
+use crate::model::task::Task;
+use crate::model::task_entry::TaskEntry;
+use crate::model::task_manager::TaskManager;
 
 ///////////////////////////////////////////////////////////
 
