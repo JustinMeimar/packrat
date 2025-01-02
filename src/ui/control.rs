@@ -1,26 +1,54 @@
-use std::io;
-use std::io::Stdout;
-use crossterm::{
-    event::{self, Event, KeyCode, KeyEvent},
-    execute,
-    terminal,
-};
-use tui::{ 
-    text::{Span, Spans, Text},
-    backend::{Backend, CrosstermBackend},
-    layout::{Constraint, Direction, Layout},
-    style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListItem, Paragraph},
-    Terminal,
-};
+/// control.rs
+use std::fmt;
+use std::{collections::HashMap, io};
+use crossterm::event::{self, Event, KeyCode, KeyEvent};
 use crate::ui::state::{TaskViewState, MainViewState, EntryViewState};
 use crate::{model::task::TaskManager, ui::view::{Transition, View}};
 
-pub trait Controlable {
-    
-    ///
-    fn control(&mut self) -> Transition;
+///////////////////////////////////////////////////////////
+
+type KeyHandler = HashMap<KeyCode, Transition>;
+
+#[derive(Clone, Debug)]
+pub enum UserAction {
+    Select,
+    Back,
+    Quit,
 }
+
+impl UserAction {
+    pub fn all() -> Vec<UserAction> {
+        vec![
+            UserAction::Select,
+            UserAction::Back,
+            UserAction::Quit,
+        ]
+    } 
+
+    pub fn from_index(index: usize) -> Self {
+        UserAction::all()[index].clone()
+    }    
+}
+
+impl fmt::Display for UserAction {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let text = match self {
+            UserAction::Select => "Select (s)",  
+            UserAction::Back => "Back (b)",  
+            UserAction::Quit => "Quit (q)"  
+        };
+        write!(fmt, "{}", text)
+    }
+} 
+
+//////////////////////////////////////////////////////////
+
+pub trait Controlable { 
+    /// keyboard handler
+    fn control(&mut self) -> Transition;    
+}
+
+/// TODO: Factor out common default key handling
 
 impl Controlable for MainViewState {
     

@@ -15,11 +15,15 @@ impl SelectionState {
     }
     
     pub fn incr(&mut self) {
-        self.idx = (self.idx + self.max_idx - 1) % self.max_idx;
+        if self.max_idx != 0 {
+            self.idx = (self.idx + self.max_idx - 1) % self.max_idx;
+        } 
     }
 
     pub fn decr(&mut self) {
-        self.idx = (self.idx + self.max_idx + 1) % self.max_idx;
+        if self.max_idx != 0 {
+            self.idx = (self.idx + self.max_idx + 1) % self.max_idx;
+        }
     }
 }
 
@@ -32,7 +36,6 @@ pub struct MainViewState {
 impl MainViewState {
 
     pub fn new() -> Self {
-
         let tasks = TaskManager::instance()
                 .lock()
                 .unwrap()

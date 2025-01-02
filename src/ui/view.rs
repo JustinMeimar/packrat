@@ -2,15 +2,11 @@ use std::io;
 use crate::model::task::{TaskManager, Task, TaskEntry};
 use crate::ui::state::{EntryViewState, MainViewState, TaskViewState};
 use crate::ui::render::Renderable;
-// use crate::ui::render::{TaskViewState, MainViewState, EntryViewState};
-
 use std::process::Command;
 use std::path::Path;
 use std::thread;
 use std::time::Duration;
 
-///////////////////////////////////////////////////////////
-///
 ///////////////////////////////////////////////////////////
 
 #[derive(Debug)]
@@ -32,8 +28,6 @@ pub struct App {
     pub view_stack: Vec<View>
 }
 
-////////////////////////////////////////////////////////////
-///
 ////////////////////////////////////////////////////////////
 
 impl App {
@@ -59,8 +53,6 @@ impl App {
                 _ => panic!("This is a packrat bug!")
             };
             
-            println!("Got transition: {:?}", transition);
-
             // dispatch next view based on transition
             match transition {
                 Transition::Push(v) => self.view_stack.push(v),
@@ -73,40 +65,5 @@ impl App {
         Ok(())
     }
 
-}
-
-fn _sleep(time: u64) {
-    thread::sleep(Duration::from_secs(time));
-}
-
-////////////////////////////////////////////////////////////
-///
-////////////////////////////////////////////////////////////
-
-pub fn test_render_main_view(state: &mut MainViewState, db: &TaskManager) -> Transition {
-    
-    let max_idx = db.get_tasks().len();
-
-    loop {
-        println!("Rendering the main view... ({:?} tasks)", max_idx);
-        // _sleep(1);
-        // state.idx = 1;
-        // let selected_task = db.get_tasks()[state.idx].clone();
-
-        // return Transition::Push(
-        //     View::TaskView(TaskViewState::new(selected_task))
-        // );
-    }
-}
-
-
-pub fn test_render_task_view(state: &mut TaskViewState, db: &TaskManager) -> Transition {
-    
-    let task = state.task.clone();
-    let max_idx = db.get_task_entries(task.id).len();
-    loop {
-        // println!("Rendering the task view... ({:?} entries)", max_idx);
-        // _sleep(1); 
-    }
 }
 

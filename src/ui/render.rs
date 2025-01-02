@@ -10,13 +10,16 @@ use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListItem, Paragraph},
+    widgets::{Block, Borders, List, ListItem, Paragraph, Table, Row},
     Terminal,
 };
 use crate::{model::task::TaskManager, ui::view::{Transition, View}};
 use crate::ui::state::{TaskViewState, MainViewState, EntryViewState};
 use crate::ui::control::Controlable;
-use crate::ui::render_lib::{term_default_layout, term_user_action_list};
+use crate::ui::render_lib::{
+    term_default_layout,
+    term_user_action_list,
+};
 use crate::model::task::{Task, TaskEntry};
 use super::state::SelectionState;
 
@@ -32,6 +35,9 @@ pub trait Renderable {
 
 impl Renderable for EntryViewState {
     fn render(&mut self) -> io::Result<Transition> {
+        loop {
+            println!("Open Neovim!") 
+        } 
         Ok(Transition::Stay)
     }
 }
@@ -114,25 +120,10 @@ fn render_view_teardown(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> io
     Ok(())
 }
 
-#[derive(Clone, Debug)]
-pub enum UserAction {
-    Select,
-    Back,
-    Quit,
-    None,
-}
-
-impl UserAction {
-    pub fn all() -> Vec<UserAction> {
-        vec![
-            UserAction::Back,
-            UserAction::Quit,
-            UserAction::None,
-        ]
-    } 
-    pub fn from_index(index: usize) -> Self {
-        UserAction::all()[index].clone()
-    }
+pub fn term_mixed_layout() -> Layout {
+    Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
 }
 
 fn draw_widgets(terminal: &mut Terminal<CrosstermBackend<Stdout>>, widgets: Vec<List<'static>>) {
@@ -186,76 +177,6 @@ fn style_list_item(
         Style::default()
     };
     ListItem::new(Spans::from(Span::styled(item_text.to_string(), style)))
-}
-
-fn control_handler(tasks: &Vec<Task>, selector: &mut SelectionState) -> Transition {
-    
-    match event::read().unwrap() {  
-        
-        Event::Key(KeyEvent { code: KeyCode::Char('q') | KeyCode::Char('e'), .. }) 
-            => Transition::Quit, 
-        
-        Event::Key(KeyEvent { code: KeyCode::Char('s') | KeyCode::Enter, .. })
-            => {
-
-                let task = TaskManager::instance()
-                    .lock()
-                    .unwrap()
-                    .get_tasks()[selector.idx]
-                    .clone();
-
-                Transition::Push(View::TaskView(TaskViewState::new(task)))
-            } 
-        
-        Event::Key(KeyEvent { code: KeyCode::Char('j') | KeyCode::Down, .. })
-            => { 
-                selector.decr();
-                Transition::Stay
-            }, 
-        
-        Event::Key(KeyEvent { code: KeyCode::Char('k') | KeyCode::Up, .. })
-            => { 
-                selector.incr();
-                Transition::Stay
-            },
-       
-        Event::Key(KeyEvent { code: KeyCode::Char('b'), .. })
-            =>  Transition::Stay,
-        _ 
-            => Transition::Stay,
-    }
-}
-
-fn control_handler_entries(tasks: &Vec<TaskEntry>, selector: &mut SelectionState) -> Transition {
-    
-    match event::read().unwrap() {  
-        
-        Event::Key(KeyEvent { code: KeyCode::Char('q') | KeyCode::Char('e'), .. }) 
-            => Transition::Quit, 
-        
-        Event::Key(KeyEvent { code: KeyCode::Char('s') | KeyCode::Enter, .. })
-            => {
-
-                Transition::Stay
-            } 
-        
-        Event::Key(KeyEvent { code: KeyCode::Char('j') | KeyCode::Down, .. })
-            => { 
-                selector.decr();
-                Transition::Stay
-            }, 
-        
-        Event::Key(KeyEvent { code: KeyCode::Char('k') | KeyCode::Up, .. })
-            => { 
-                selector.incr();
-                Transition::Stay
-            },
-       
-        Event::Key(KeyEvent { code: KeyCode::Char('b'), .. })
-            =>  Transition::Pop,
-        _ 
-            => Transition::Stay,
-    }
 }
 
 // fn draw_main_view(
