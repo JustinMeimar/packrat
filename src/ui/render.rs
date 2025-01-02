@@ -1,14 +1,10 @@
-use std::fmt;
-use std::thread;
-use std::time::Duration;
-use std::io::{self, Write, Stdout};
-
+use std::io;
+use std::io::Stdout;
 use crossterm::{
     event::{self, Event, KeyCode, KeyEvent},
     execute,
     terminal,
 };
-
 use tui::{ 
     text::{Span, Spans, Text},
     backend::{Backend, CrosstermBackend},
@@ -17,190 +13,146 @@ use tui::{
     widgets::{Block, Borders, List, ListItem, Paragraph},
     Terminal,
 };
-
-use crate::model::task::Task;
-use crate::model::task::TaskManager;
-use crate::ui::terminal::{TerminalState, UserAction, SelectedItem};
+use crate::{model::task::TaskManager, ui::view::{Transition, View}};
+use crate::ui::state::{TaskViewState, MainViewState, EntryViewState};
+use crate::ui::control::Controlable;
+use crate::ui::render_lib::{term_default_layout, term_user_action_list};
+use crate::model::task::{Task, TaskEntry};
+use super::state::SelectionState;
 
 ///////////////////////////////////////////////////////////
 
-pub fn render_main_view(state: &mut TerminalState) -> UserAction { 
+pub trait Renderable { 
     
-    // set the number of selection options for main view
-    state.select.len = state.db.get_tasks().len();
-    
-    // render indefinitely
-    loop {
-        if let Ok(action) = _render_view(
-            state,
-            draw_main_view,
-            control_handler_main
-        ) {
-            return action;
-        }
+    /// 
+    fn render(&mut self) -> io::Result<Transition>;
+}
+
+///////////////////////////////////////////////////////////
+
+impl Renderable for EntryViewState {
+    fn render(&mut self) -> io::Result<Transition> {
+        Ok(Transition::Stay)
     }
 }
 
-pub fn render_task_view(state: &mut TerminalState) -> UserAction {
-    loop {
-        if let Ok(action) = _render_view(
-            state,
-            draw_task_view,
-            control_handler_main
-        ) {
-            return action;
+impl Renderable for MainViewState {
+
+    fn render(&mut self) -> io::Result<Transition> {
+        
+        let mut terminal = render_view_startup()?;
+        let mut transition = Transition::Stay; 
+
+        loop {
+            let widgets = vec![
+                term_user_action_list(),
+                term_user_task_list(&self.items, &self.selector),
+            ];
+            
+            draw_widgets(&mut terminal, widgets);
+
+            transition = self.control();
+            match transition {
+                Transition::Stay => continue,
+                _ => break
+            }
         }
-    }      
+        render_view_teardown(&mut terminal); 
+        
+        return Ok(transition);
+    }
+}
+
+impl Renderable for TaskViewState {
+
+    fn render(&mut self) -> io::Result<Transition> {
+        
+        let mut terminal = render_view_startup()?;
+        let mut transition = Transition::Stay; 
+        
+        loop {
+            
+            let widgets = vec![
+                term_user_action_list(),
+                term_user_task_entries_list(&self.items, self.selector.idx)
+            ];
+
+            draw_widgets(&mut terminal, widgets);
+
+            transition = self.control();
+            match transition {
+                Transition::Stay => continue,
+                _ => break
+            }
+        }
+        
+        render_view_teardown(&mut terminal); 
+        return Ok(transition);
+    }
 }
 
 ///////////////////////////////////////////////////////////
 
-fn _render_view<F, G>(
-    state: &mut TerminalState,
-    mut draw_fn: F,
-    mut control_fn: G
-) -> Result<UserAction, std::io::Error>
-
-where F: FnMut(
-            &mut Terminal<CrosstermBackend<Stdout>>,
-            &mut TerminalState
-        ),
-      G: FnMut(
-            &mut TerminalState
-        ) -> UserAction
-{ 
-    // flush stdout
+fn render_view_startup() -> io::Result<Terminal<CrosstermBackend<Stdout>>> {
+    
+    // Flush stdout
     let mut stdout = std::io::stdout();
     execute!(stdout, crossterm::terminal::EnterAlternateScreen)?;
 
-    // intit the terminal
+    // Initialize the terminal
     let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
+    let terminal = Terminal::new(backend)?;
     crossterm::terminal::enable_raw_mode()?;
-    
-    let mut action = UserAction::Back;
 
-    loop {
-        draw_fn(&mut terminal, state);  
-        action = control_fn(state);
-        match action {
-            UserAction::Select(_) | UserAction::Back | UserAction::Quit => break,
-            _ => continue
-        };
-    }
-    
-    // cleanup
+    Ok(terminal)
+}
+
+fn render_view_teardown(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> io::Result<()> {
     crossterm::terminal::disable_raw_mode()?;
     execute!(terminal.backend_mut(), crossterm::terminal::LeaveAlternateScreen)?;
     terminal.show_cursor()?;
-
-    Ok(action)
+    Ok(())
 }
 
-fn _sleep(time: u64) {
-    thread::sleep(Duration::from_secs(time));
+#[derive(Clone, Debug)]
+pub enum UserAction {
+    Select,
+    Back,
+    Quit,
+    None,
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
-fn draw_main_view(
-    terminal: &mut Terminal<CrosstermBackend<Stdout>>,
-    state: &mut TerminalState,
-) {
-    let widgets = vec![
-        term_user_action_list(),
-        term_user_task_list(state),
-    ];
-    terminal
-        .draw(|f| {
-            let chunks = term_default_layout().split(f.size());
-            widgets.iter().enumerate().for_each(|(i, w)| {
-                f.render_widget(w.clone(), chunks[i]);
-            });
-        })
-        .unwrap();
-}
-
-fn draw_task_view(
-    terminal: &mut Terminal<CrosstermBackend<Stdout>>,
-    state: &mut TerminalState,
-) {
-    let widgets = vec![
-        term_user_action_list(),
-        term_task_entries_list(state),
-    ];
-    terminal
-        .draw(|f| {
-            let chunks = term_default_layout().split(f.size());
-            widgets.iter().enumerate().for_each(|(i, w)| {
-                f.render_widget(w.clone(), chunks[i]);
-            });
-        })
-        .unwrap();
-}
-
-fn control_handler_main(state: &mut TerminalState) -> UserAction {
-    
-    match event::read().unwrap() {  
-        
-        Event::Key(KeyEvent { code: KeyCode::Char('q') | KeyCode::Char('e'), .. }) 
-            => UserAction::Quit, 
-        
-        Event::Key(KeyEvent { code: KeyCode::Char('s') | KeyCode::Enter, .. })
-            => {
-                let tasks = state.db.get_tasks();
-                let selected_task = tasks[state.select.idx].clone(); 
-                UserAction::Select(SelectedItem::Task(selected_task))
-            } 
-        
-        Event::Key(KeyEvent { code: KeyCode::Char('j') | KeyCode::Down, .. })
-            => { 
-                state.select.decr();
-                UserAction::None
-            }, 
-        
-        Event::Key(KeyEvent { code: KeyCode::Char('k') | KeyCode::Up, .. })
-            => { 
-                state.select.incr();
-                UserAction::None
-            },
-        _ 
-            => UserAction::None,
+impl UserAction {
+    pub fn all() -> Vec<UserAction> {
+        vec![
+            UserAction::Back,
+            UserAction::Quit,
+            UserAction::None,
+        ]
+    } 
+    pub fn from_index(index: usize) -> Self {
+        UserAction::all()[index].clone()
     }
 }
 
-///
-///
-fn term_default_layout() -> Layout {
-    Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(10), Constraint::Percentage(90)].as_ref())
-}
-
-///
-///
-fn term_user_action_list() -> List<'static> {
-
-    let items: Vec<ListItem> = UserAction::all()
-        .iter()
-        .map(|x| ListItem::new(format!(" > {:?}", x)))
-        .collect();
-
-    List::new(items)
-        .block(Block::default().title("Controls").borders(Borders::ALL))
-        .style(Style::default().fg(Color::Gray))
-        .highlight_style(Style::default().add_modifier(Modifier::ITALIC))
-        .highlight_symbol(">>")   
-}
-
-///
-/// 
-fn term_user_task_list(state: &mut TerminalState) -> List<'static> {
+fn draw_widgets(terminal: &mut Terminal<CrosstermBackend<Stdout>>, widgets: Vec<List<'static>>) {
     
-    let task_list: Vec<ListItem> = state.db.get_tasks()
+    terminal
+        .draw(|f| {
+            let chunks = term_default_layout().split(f.size());
+            widgets.iter().enumerate().for_each(|(i, w)| {
+                f.render_widget(w.clone(), chunks[i]);
+            });
+        })
+        .unwrap();
+}
+
+fn term_user_task_list(tasks: &Vec<Task>,selection: &SelectionState) -> List<'static> {
+    
+    let task_list: Vec<ListItem> = tasks
         .iter()
         .enumerate()
-        .map(|(i, task)| style_list_item(&task.name, state.select.idx, i))
+        .map(|(i, task)| style_list_item(&task.name, selection.idx, i))
         .collect();
 
 
@@ -209,27 +161,19 @@ fn term_user_task_list(state: &mut TerminalState) -> List<'static> {
         .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
 }
 
-///
-/// 
-fn term_task_entries_list(state: &mut TerminalState) -> List<'static> {
+fn term_user_task_entries_list(tasks: &Vec<TaskEntry>, idx: usize) -> List<'static> {
     
-    let task = match state.select.item.as_ref() {
-        Some(SelectedItem::Task(t)) => t,   
-        _ => panic!("No item is currently selected!")
-    };
-
-    let task_list: Vec<ListItem> = state.db.get_task_entries(task.id)
+    let task_list: Vec<ListItem> = tasks
         .iter()
         .enumerate()
-        .map(|(i, entry)| style_list_item(&entry.id.to_string(), state.select.idx, i))
+        .map(|(i, entry)| style_list_item(&entry.id.to_string(), idx, i))
         .collect();
 
+
     List::new(task_list)
-        .block(Block::default().title("Task Entries!").borders(Borders::ALL))
+        .block(Block::default().title("Tasks").borders(Borders::ALL))
         .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
 }
-
-///
 
 fn style_list_item(
     item_text: &str, // Accept a string slice
@@ -243,4 +187,93 @@ fn style_list_item(
     };
     ListItem::new(Spans::from(Span::styled(item_text.to_string(), style)))
 }
+
+fn control_handler(tasks: &Vec<Task>, selector: &mut SelectionState) -> Transition {
+    
+    match event::read().unwrap() {  
+        
+        Event::Key(KeyEvent { code: KeyCode::Char('q') | KeyCode::Char('e'), .. }) 
+            => Transition::Quit, 
+        
+        Event::Key(KeyEvent { code: KeyCode::Char('s') | KeyCode::Enter, .. })
+            => {
+
+                let task = TaskManager::instance()
+                    .lock()
+                    .unwrap()
+                    .get_tasks()[selector.idx]
+                    .clone();
+
+                Transition::Push(View::TaskView(TaskViewState::new(task)))
+            } 
+        
+        Event::Key(KeyEvent { code: KeyCode::Char('j') | KeyCode::Down, .. })
+            => { 
+                selector.decr();
+                Transition::Stay
+            }, 
+        
+        Event::Key(KeyEvent { code: KeyCode::Char('k') | KeyCode::Up, .. })
+            => { 
+                selector.incr();
+                Transition::Stay
+            },
+       
+        Event::Key(KeyEvent { code: KeyCode::Char('b'), .. })
+            =>  Transition::Stay,
+        _ 
+            => Transition::Stay,
+    }
+}
+
+fn control_handler_entries(tasks: &Vec<TaskEntry>, selector: &mut SelectionState) -> Transition {
+    
+    match event::read().unwrap() {  
+        
+        Event::Key(KeyEvent { code: KeyCode::Char('q') | KeyCode::Char('e'), .. }) 
+            => Transition::Quit, 
+        
+        Event::Key(KeyEvent { code: KeyCode::Char('s') | KeyCode::Enter, .. })
+            => {
+
+                Transition::Stay
+            } 
+        
+        Event::Key(KeyEvent { code: KeyCode::Char('j') | KeyCode::Down, .. })
+            => { 
+                selector.decr();
+                Transition::Stay
+            }, 
+        
+        Event::Key(KeyEvent { code: KeyCode::Char('k') | KeyCode::Up, .. })
+            => { 
+                selector.incr();
+                Transition::Stay
+            },
+       
+        Event::Key(KeyEvent { code: KeyCode::Char('b'), .. })
+            =>  Transition::Pop,
+        _ 
+            => Transition::Stay,
+    }
+}
+
+// fn draw_main_view(
+//     terminal: &mut Terminal<CrosstermBackend<Stdout>>,
+//     // state: &mut TerminalState,
+// ) {
+//     let widgets = vec![
+//         term_user_action_list(),
+//         // term_user_task_list(state),
+//     ];
+//     terminal
+//         .draw(|f| {
+//             let chunks = term_default_layout().split(f.size());
+//             widgets.iter().enumerate().for_each(|(i, w)| {
+//                 f.render_widget(w.clone(), chunks[i]);
+//             });
+//         })
+//         .unwrap();
+// }
+//
 

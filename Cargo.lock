@@ -327,6 +327,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "crossterm 0.28.1",
+ "once_cell",
  "serde",
  "serde_json",
  "sled",

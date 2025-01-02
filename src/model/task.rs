@@ -2,6 +2,7 @@ use sled::Db;
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc, Local};
+use std::sync::{Mutex, LazyLock};
 
 pub struct TaskManager {
     db: sled::Db,
@@ -15,7 +16,17 @@ impl TaskManager {
             db: sled::open(db_path).unwrap()
         }
     }
-   
+
+    /// Singleton instance of TaskManager
+    pub fn instance() -> &'static Mutex<TaskManager> {
+        static INSTANCE: LazyLock<Mutex<TaskManager>> = LazyLock::new(|| {
+            let db_path = "./scratch/patrack.db";
+            Mutex::new(TaskManager::new(db_path))
+        });
+
+        &INSTANCE
+    }
+
     /// Create a task in the DB
     pub fn create_task(&self, name: String, desc: String) -> Task {
         let task = Task::new(name, desc); 
@@ -138,10 +149,6 @@ impl BytesConvertible for Task {
                 }
         }
     }
-
-    // fn from_bytes(bytes: &[u8]) -> Self {
-    //     serde_json::from_slice(bytes).unwrap()
-    // }
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone)]
@@ -169,10 +176,6 @@ impl BytesConvertible for TaskEntry {
     fn to_bytes(&self) -> Vec<u8> {
         serde_json::to_vec(self).unwrap() 
     }
-
-    // fn from_bytes(bytes: &[u8]) -> Self {
-    //     serde_json::from_slice(bytes).unwrap()
-    // }
 
     fn from_bytes(bytes: &[u8]) -> Self {
         match serde_json::from_slice(bytes) {
