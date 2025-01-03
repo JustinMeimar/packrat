@@ -36,14 +36,14 @@ impl TaskManager {
     pub fn create_task(&self, name: String, desc: String) -> Task {
         let task = Task::new(name, desc); 
         let key = format!("task:{}", task.id);
-        self.db.insert(key, task.to_bytes()).unwrap();
+        self.db.insert(key, task.to_bytes().unwrap()).unwrap();
         task
     }
     
     pub fn create_task_entry(&self, task_id: Uuid, content: Vec<u8>) -> TaskEntry {
         let task_entry = TaskEntry::new(task_id, content);
         let key = format!("task_entry:{}:{}", task_id, task_entry.id);
-        self.db.insert(key, task_entry.to_bytes()).unwrap();
+        self.db.insert(key, task_entry.to_bytes().unwrap()).unwrap();
         task_entry 
     }
 
@@ -106,7 +106,7 @@ impl TaskManager {
             .get(key)
             .ok()
             .flatten()
-            .map(|data| T::from_bytes(&data))
+            .map(|data| T::from_bytes(&data).unwrap())
     }
      
     fn _get_prefix<T>(&self, prefix: String) -> Vec<T> 
@@ -116,7 +116,7 @@ impl TaskManager {
         self.db
             .scan_prefix(prefix)
             .filter_map(|x| x.ok()) // only take some values
-            .map(|(_k, v)| T::from_bytes(&v))
+            .map(|(_k, v)| T::from_bytes(&v).unwrap())
             .collect()
     }
 }
