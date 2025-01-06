@@ -14,6 +14,6 @@ pub trait Storable: Sized + Display {
     fn from_bytes(bytes: &[u8]) -> serde_json::Result<Self>;
     
     // serialzie object into bytes for datastore
-    fn to_bytes(&self) -> serde_json::Result<Vec<u8>>; 
+    fn to_bytes(&self) -> serde_json::Result<Vec<u8>>;
 }
 

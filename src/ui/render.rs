@@ -7,7 +7,7 @@ use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListItem, Paragraph},
+    widgets::{Block, Borders, List, ListItem, Paragraph, Table},
     Terminal,
 };
 use tempfile::NamedTempFile;
@@ -36,9 +36,9 @@ pub trait Renderable {
 
     /// refresh dispaly items, default none
     fn update(&mut self) {}
-
+    
     /// set time interval to trigger updates
-    fn poll(&self) {}
+    fn poll(&mut self) {} 
 }
 
 ///////////////////////////////////////////////////////////
@@ -86,31 +86,36 @@ impl Renderable for EntryViewState {
 
 impl Renderable for MainViewState {
     
-    fn update(&mut self) {
-        
+    /// Check the poll interval 
+    fn poll(&mut self) {
+         if self.last_poll_time.elapsed() >= self.poll_interval {
+            self.update();
+            self.last_poll_time = Instant::now();
+        }
+    }
+    
+    /// What to do during each poll interval
+    fn update(&mut self) { 
         // poll new items
         self.items = TaskStore::instance()
             .get_prefix(Task::key_all())
             .unwrap(); 
             
-        // upadte selector
+        // update selector
         self.selector.max_idx = self.items.len();
     }
-
+    
+    // Draw the View on the terminal
     fn render(&mut self) -> io::Result<Transition> {
         
         let mut terminal = render_view_startup()?;
         let mut transition = Transition::Stay; 
-        // let poll_interval = Duration::from_millis(100);
-        // let mut last_poll_time = Instant::now();
-
+        
         loop {
-
-            if self.last_poll_time.elapsed() >= self.poll_interval {
-                self.update();
-                self.last_poll_time = Instant::now();
-            }
-
+            self.poll();
+            
+            // draw_widgets(&mut_terminal, self.get_widgets());
+            
             let widgets = vec![
                 term_user_action_list(),
                 term_user_task_list(&self.items, &self.selector),
@@ -174,9 +179,7 @@ impl<T: Storable> Renderable for CreateViewState<T> {
     fn render(&mut self) -> io::Result<Transition> {
         
         let mut terminal = render_view_startup()?;
-        let mut title_input = String::new();
-        let mut desc_input = String::new();
-        let mut is_title_active = true;
+        let mut transition = Transition::Stay; 
 
         let result = loop {
             terminal.draw(|f| {
@@ -205,24 +208,24 @@ impl<T: Storable> Renderable for CreateViewState<T> {
                     .style(Style::default().fg(Color::Gray));
                 f.render_widget(modal_block, modal_area);
 
-                let title_widget = Paragraph::new(title_input.as_str())
+                let title_widget = Paragraph::new(self.inputs[0].as_str())
                     .block(
                         Block::default()
                             .title("Task Title")
                             .borders(Borders::ALL)
-                            .style(if is_title_active {
+                            .style(if self.active_input == 0 {
                                 Style::default().fg(Color::Yellow)
                             } else {
                                 Style::default()
                             }),
                     );
 
-                let desc_widget = Paragraph::new(desc_input.as_str())
+                let desc_widget = Paragraph::new(self.inputs[1].as_str())
                     .block(
                         Block::default()
                             .title("Task Description")
                             .borders(Borders::ALL)
-                            .style(if !is_title_active {
+                            .style(if self.active_input == 1 {
                                 Style::default().fg(Color::Yellow)
                             } else {
                                 Style::default()
@@ -232,49 +235,17 @@ impl<T: Storable> Renderable for CreateViewState<T> {
                 f.render_widget(title_widget, chunks[0]);
                 f.render_widget(desc_widget, chunks[1]);
             })?;
-
-            match crossterm::event::read().unwrap() {
-                crossterm::event::Event::Key(event) => match event.code {
-                    crossterm::event::KeyCode::Char('q') => {
-                        break Ok(Transition::Pop);
-                    }
-                    crossterm::event::KeyCode::Char(c) => {
-                        if is_title_active {
-                            title_input.push(c);
-                        } else {
-                            desc_input.push(c);
-                        }
-                    }
-                    crossterm::event::KeyCode::Backspace => {
-                        if is_title_active {
-                            title_input.pop();
-                        } else {
-                            desc_input.pop();
-                        }
-                    }
-                    crossterm::event::KeyCode::Tab => {
-                        is_title_active = !is_title_active;
-                    }
-                    crossterm::event::KeyCode::Enter => {
-                        if !title_input.trim().is_empty() && !desc_input.trim().is_empty() {
-                            TaskStore::instance().put(
-                                Task::new(title_input.clone(), desc_input.clone())
-                            );
-                            break Ok(Transition::Pop);
-                        }
-                    }
-                    crossterm::event::KeyCode::Esc => {
-                        break Ok(Transition::Pop);
-                    }
-                    _ => {}
-                },
-                _ => {}
-            }
+            
+            transition = self.control();
+            match transition {
+                Transition::Stay => continue,
+                _ => break
+            } 
         };
 
         // Ensure the terminal is properly torn down before returning
         render_view_teardown(&mut terminal)?;
-        result
+        Ok(transition)
     }
 }
 

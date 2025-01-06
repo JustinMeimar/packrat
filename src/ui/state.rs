@@ -21,9 +21,6 @@ pub struct MainViewState {
     pub items: Vec<Task>,
     pub poll_interval: Duration,
     pub last_poll_time: Instant, 
-    // poll_interval = Duration,
-    // Duration::from_millis(100);
-        // let mut last_poll_time = Instant::now();
 }
 
 #[derive(Debug)]
@@ -42,6 +39,8 @@ pub struct EntryViewState {
 #[derive(Debug)]
 pub struct CreateViewState<T: Storable> {
     pub item: T,
+    pub inputs: Vec<String>, 
+    pub active_input: usize,
 }
 
 ///////////////////////////////////////////////////////////
@@ -107,6 +106,7 @@ impl TaskViewState {
     }
 }
 
+// View for task entries
 impl EntryViewState {
     pub fn new(task: TaskEntry) -> Self {
 
@@ -117,13 +117,17 @@ impl EntryViewState {
     }
 }
 
-impl<T: Storable> CreateViewState<T> {
-    
-    pub fn new(item: T) -> Self {
-
+impl CreateViewState<Task> {
+    pub fn new(item: Task) -> Self {
         CreateViewState {
             item,
+            // TODO: Find a way to encapsulate this within a Task!
+            // Perhaps get_default_inputs()
+            inputs: vec![
+                String::from("Task Title"),
+                String::from("Task Description")
+            ],
+            active_input: 0
         }
     }
 }
-
