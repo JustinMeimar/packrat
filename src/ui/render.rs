@@ -11,6 +11,7 @@ use tui::{
     Terminal,
 };
 use tempfile::NamedTempFile;
+use crate::model::store::TaskStore;
 use crate::ui::view::Transition;
 use crate::ui::state::{TaskViewState, MainViewState, EntryViewState};
 use crate::ui::control::Controlable;
@@ -34,6 +35,8 @@ pub trait Renderable {
 ///////////////////////////////////////////////////////////
 
 impl Renderable for EntryViewState {
+    
+    // A hacky, happy-path implementation for now
     fn render(&mut self) -> io::Result<Transition> {
         
         // get the contents of selected task entry
@@ -65,12 +68,9 @@ impl Renderable for EntryViewState {
             .read_to_string(&mut content_updated)?;
 
         // synchronize the updates
-        println!("Updated: {}", content_updated);
+        self.task_entry.content = content_updated.into_bytes();  
+        TaskStore::instance().put(self.task_entry.clone());
         
-        //    
-        // loop {
-        //     println!("Open Neovim!") 
-        // } 
         Ok(Transition::Pop)
     }
 }
