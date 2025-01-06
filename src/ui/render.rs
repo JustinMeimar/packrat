@@ -25,7 +25,7 @@ use crate::ui::widgets::{
 use super::state::SelectionState;
 use crate::model::task::Task;
 use crate::model::task_entry::TaskEntry;
-use crate::model::task_manager::TaskManager;
+use crate::model::store::TaskStore;
 use std::process::Command;
 
 ///////////////////////////////////////////////////////////
@@ -216,23 +216,4 @@ fn style_list_item(
     };
     ListItem::new(Spans::from(Span::styled(item_text.to_string(), style)))
 }
-
-// fn draw_main_view(
-//     terminal: &mut Terminal<CrosstermBackend<Stdout>>,
-//     // state: &mut TerminalState,
-// ) {
-//     let widgets = vec![
-//         term_user_action_list(),
-//         // term_user_task_list(state),
-//     ];
-//     terminal
-//         .draw(|f| {
-//             let chunks = term_default_layout().split(f.size());
-//             widgets.iter().enumerate().for_each(|(i, w)| {
-//                 f.render_widget(w.clone(), chunks[i]);
-//             });
-//         })
-//         .unwrap();
-// }
-//
 

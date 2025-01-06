@@ -7,7 +7,7 @@ use crate::ui::state::{TaskViewState, MainViewState, EntryViewState};
 use crate::ui::view::View;
 use crate::model::task::Task;
 use crate::model::task_entry::TaskEntry;
-use crate::model::task_manager::TaskManager;
+use crate::model::store::TaskStore;
 use crate::ui::view::Transition;
 
 ///////////////////////////////////////////////////////////

@@ -2,7 +2,8 @@
 
 use crate::model::task::Task;
 use crate::model::task_entry::TaskEntry;
-use crate::model::task_manager::TaskManager;
+use crate::model::store::TaskStore;
+use crate::model::convert::Storable;
 
 ///////////////////////////////////////////////////////////
 
@@ -11,6 +12,27 @@ pub struct SelectionState {
     pub idx: usize,     // index of current selection
     pub max_idx: usize, // bounds of selection
 }
+
+#[derive(Debug)]
+pub struct MainViewState {
+    pub selector: SelectionState,
+    pub items: Vec<Task>,
+}
+
+#[derive(Debug)]
+pub struct TaskViewState {
+    pub selector: SelectionState,
+    pub task: Task,
+    pub items: Vec<TaskEntry>,
+}
+
+#[derive(Debug)]
+pub struct EntryViewState {
+    pub task_entry: TaskEntry,
+    pub in_editor: bool,
+}
+
+///////////////////////////////////////////////////////////
 
 impl SelectionState {
     
@@ -31,42 +53,29 @@ impl SelectionState {
     }
 }
 
-#[derive(Debug)]
-pub struct MainViewState {
-    pub selector: SelectionState,
-    pub items: Vec<Task>,
-}
-
 impl MainViewState {
 
     pub fn new() -> Self {
-        let tasks = TaskManager::instance()
-                .lock()
-                .unwrap()
-                .get_tasks();
 
+        let tasks = TaskStore::instance()
+            .get_prefix(Task::key_all())
+            .unwrap();
+    
         MainViewState {
             selector: SelectionState::new(tasks.len()),
             items: tasks
         }
     }
-
-}
-
-#[derive(Debug)]
-pub struct TaskViewState {
-    pub selector: SelectionState,
-    pub task: Task,
-    pub items: Vec<TaskEntry>,
 }
 
 impl TaskViewState {
     pub fn new(task: Task) -> Self {
 
-        let task_entries = TaskManager::instance()
-                .lock()
-                .unwrap()
-                .get_task_entries(task.id);
+        let task_entries = TaskStore::instance()
+            .get_prefix(TaskEntry::key_task(task.id))
+            .unwrap();
+        
+        assert!(task_entries.len() >= 0);
 
         TaskViewState {
             selector: SelectionState::new(task_entries.len()),
@@ -74,12 +83,6 @@ impl TaskViewState {
             task,
         }
     }
-}
-
-#[derive(Debug)]
-pub struct EntryViewState {
-    pub task_entry: TaskEntry,
-    pub in_editor: bool,
 }
 
 impl EntryViewState {

@@ -1,7 +1,7 @@
 use std::io;
 use crate::model::task::Task;
 use crate::model::task_entry::TaskEntry;
-use crate::model::task_manager::TaskManager;
+use crate::model::store::TaskStore;
 use crate::ui::state::{EntryViewState, MainViewState, TaskViewState};
 use crate::ui::render::Renderable;
 use std::process::Command;
