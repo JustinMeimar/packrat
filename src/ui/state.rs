@@ -1,9 +1,11 @@
+
 /// state.rs
 
 use crate::model::task::Task;
 use crate::model::task_entry::TaskEntry;
 use crate::model::store::TaskStore;
 use crate::model::convert::Storable;
+use std::time::{Duration, Instant};
 
 ///////////////////////////////////////////////////////////
 
@@ -17,6 +19,11 @@ pub struct SelectionState {
 pub struct MainViewState {
     pub selector: SelectionState,
     pub items: Vec<Task>,
+    pub poll_interval: Duration,
+    pub last_poll_time: Instant, 
+    // poll_interval = Duration,
+    // Duration::from_millis(100);
+        // let mut last_poll_time = Instant::now();
 }
 
 #[derive(Debug)]
@@ -76,20 +83,11 @@ impl MainViewState {
     
         MainViewState {
             selector: SelectionState::new(tasks.len()),
-            items: tasks
+            items: tasks,
+            poll_interval: Duration::from_millis(100),
+            last_poll_time: Instant::now(),
         }
-    }
-
-    pub fn update(&mut self) {
-        
-        // poll new items
-        self.items = TaskStore::instance()
-            .get_prefix(Task::key_all())
-            .unwrap(); 
-            
-        // upadte selector
-        self.selector.max_idx = self.items.len();
-    }
+    }    
 }
 
 impl TaskViewState {
@@ -106,12 +104,6 @@ impl TaskViewState {
             items: task_entries,
             task,
         }
-    }
-
-    pub fn update(&mut self) {
-        self.items = TaskStore::instance()
-            .get_prefix(TaskEntry::key_task(self.task.id))
-            .unwrap(); 
     }
 }
 
@@ -133,6 +125,5 @@ impl<T: Storable> CreateViewState<T> {
             item,
         }
     }
-
 }
 

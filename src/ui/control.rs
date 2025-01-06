@@ -16,6 +16,7 @@ type KeyHandler = HashMap<KeyCode, Transition>;
 pub enum UserAction {
     Select,
     New,
+    Edit,
     Back,
     Quit,
 }
@@ -25,6 +26,7 @@ impl UserAction {
         vec![
             UserAction::Select,
             UserAction::New,
+            UserAction::Edit,
             UserAction::Back,
             UserAction::Quit,
         ]
@@ -41,6 +43,7 @@ impl fmt::Display for UserAction {
             UserAction::Select => "Select (s)",  
             UserAction::Back => "Back (b)",  
             UserAction::New => "New (n)",  
+            UserAction::Edit => "Edit (e)",  
             UserAction::Quit => "Quit (q)",  
         };
         write!(fmt, "{}", text)
@@ -62,9 +65,20 @@ impl Controlable for MainViewState {
         
         match event::read().unwrap() {  
 
-            Event::Key(KeyEvent { code: KeyCode::Char('q') | KeyCode::Char('e'), .. }) 
+            Event::Key(KeyEvent { code: KeyCode::Char('q'), .. }) 
                 => Transition::Quit, 
 
+            Event::Key(KeyEvent { code: KeyCode::Char('e'), .. }) 
+                => {
+                    let item = self.items[self.selector.idx].clone();
+                    Transition::Push(
+                        View::CreateView(
+                            CreateViewState::new(
+                                item.clone()
+                            )
+                        )
+                    )
+                } 
             Event::Key(KeyEvent { code: KeyCode::Char('n'), .. }) 
                 => {
                     Transition::Push(
@@ -112,7 +126,7 @@ impl Controlable for TaskViewState {
         
         match event::read().unwrap() {  
 
-            Event::Key(KeyEvent { code: KeyCode::Char('q') | KeyCode::Char('e'), .. }) 
+            Event::Key(KeyEvent { code: KeyCode::Char('q'), .. }) 
                 => Transition::Quit, 
             
             Event::Key(KeyEvent { code: KeyCode::Char('s') | KeyCode::Enter, .. })

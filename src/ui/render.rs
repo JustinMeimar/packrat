@@ -24,6 +24,8 @@ use super::state::{CreateViewState, SelectionState};
 use crate::model::task::Task;
 use crate::model::task_entry::TaskEntry;
 use std::process::Command;
+use std::time::{Duration, Instant};
+use crossterm::event::{self, Event, KeyEvent};
 
 ///////////////////////////////////////////////////////////
 
@@ -31,6 +33,12 @@ pub trait Renderable {
     
     /// 
     fn render(&mut self) -> io::Result<Transition>;
+
+    /// refresh dispaly items, default none
+    fn update(&mut self) {}
+
+    /// set time interval to trigger updates
+    fn poll(&self) {}
 }
 
 ///////////////////////////////////////////////////////////
@@ -76,23 +84,31 @@ impl Renderable for EntryViewState {
     }
 }
 
-use std::time::{Duration, Instant};
-use crossterm::event::{self, Event, KeyEvent};
-
 impl Renderable for MainViewState {
+    
+    fn update(&mut self) {
+        
+        // poll new items
+        self.items = TaskStore::instance()
+            .get_prefix(Task::key_all())
+            .unwrap(); 
+            
+        // upadte selector
+        self.selector.max_idx = self.items.len();
+    }
 
     fn render(&mut self) -> io::Result<Transition> {
         
         let mut terminal = render_view_startup()?;
         let mut transition = Transition::Stay; 
-        let poll_interval = Duration::from_millis(100);
-        let mut last_poll_time = Instant::now();
+        // let poll_interval = Duration::from_millis(100);
+        // let mut last_poll_time = Instant::now();
 
         loop {
 
-            if last_poll_time.elapsed() >= poll_interval {
+            if self.last_poll_time.elapsed() >= self.poll_interval {
                 self.update();
-                last_poll_time = Instant::now();
+                self.last_poll_time = Instant::now();
             }
 
             let widgets = vec![
@@ -146,10 +162,17 @@ impl Renderable for TaskViewState {
         render_view_teardown(&mut terminal); 
         return Ok(transition);
     }
+
+    fn update(&mut self) {
+        self.items = TaskStore::instance()
+            .get_prefix(TaskEntry::key_task(self.task.id))
+            .unwrap(); 
+    }
 }
 
 impl<T: Storable> Renderable for CreateViewState<T> {
     fn render(&mut self) -> io::Result<Transition> {
+        
         let mut terminal = render_view_startup()?;
         let mut title_input = String::new();
         let mut desc_input = String::new();
@@ -167,7 +190,7 @@ impl<T: Storable> Renderable for CreateViewState<T> {
                     modal_width,
                     modal_height,
                 );
-
+                
                 let chunks = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints([
@@ -206,8 +229,8 @@ impl<T: Storable> Renderable for CreateViewState<T> {
                             }),
                     );
 
-                f.render_widget(desc_widget, chunks[1]);
                 f.render_widget(title_widget, chunks[0]);
+                f.render_widget(desc_widget, chunks[1]);
             })?;
 
             match crossterm::event::read().unwrap() {
