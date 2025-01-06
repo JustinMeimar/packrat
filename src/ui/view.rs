@@ -1,6 +1,7 @@
 use std::io;
-use crate::ui::state::{EntryViewState, MainViewState, TaskViewState};
+use crate::ui::state::{EntryViewState, MainViewState, TaskViewState, CreateViewState};
 use crate::ui::render::Renderable;
+use crate::model::task::Task;
 
 ///////////////////////////////////////////////////////////
 
@@ -9,6 +10,7 @@ pub enum View {
     MainView(MainViewState),
     TaskView(TaskViewState),
     EntryView(EntryViewState),
+    CreateView(CreateViewState<Task>),
 }
 
 #[derive(Debug)]
@@ -45,13 +47,16 @@ impl App {
                 Some(View::MainView(ms)) => ms.render()?,
                 Some(View::TaskView(ts)) => ts.render()?,
                 Some(View::EntryView(es)) => es.render()?,
+                Some(View::CreateView(cs)) => cs.render()?,
                 _ => panic!("This is a packrat bug!")
             };
             
             // dispatch next view based on transition
             match transition {
                 Transition::Push(v) => self.view_stack.push(v),
-                Transition::Pop => { self.view_stack.pop(); },
+                Transition::Pop => {
+                    self.view_stack.pop();
+                },
                 Transition::Quit => break,
                 Transition::Stay => continue,
                 _ => panic!("This is a packrat bug!")

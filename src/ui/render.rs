@@ -7,10 +7,11 @@ use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListItem},
+    widgets::{Block, Borders, List, ListItem, Paragraph},
     Terminal,
 };
 use tempfile::NamedTempFile;
+use crate::model::convert::Storable;
 use crate::model::store::TaskStore;
 use crate::ui::view::Transition;
 use crate::ui::state::{TaskViewState, MainViewState, EntryViewState};
@@ -19,7 +20,7 @@ use crate::ui::widgets::{
     term_default_layout,
     term_user_action_list,
 };
-use super::state::SelectionState;
+use super::state::{CreateViewState, SelectionState};
 use crate::model::task::Task;
 use crate::model::task_entry::TaskEntry;
 use std::process::Command;
@@ -75,14 +76,25 @@ impl Renderable for EntryViewState {
     }
 }
 
+use std::time::{Duration, Instant};
+use crossterm::event::{self, Event, KeyEvent};
+
 impl Renderable for MainViewState {
 
     fn render(&mut self) -> io::Result<Transition> {
         
         let mut terminal = render_view_startup()?;
         let mut transition = Transition::Stay; 
+        let poll_interval = Duration::from_millis(100);
+        let mut last_poll_time = Instant::now();
 
         loop {
+
+            if last_poll_time.elapsed() >= poll_interval {
+                self.update();
+                last_poll_time = Instant::now();
+            }
+
             let widgets = vec![
                 term_user_action_list(),
                 term_user_task_list(&self.items, &self.selector),
@@ -108,9 +120,15 @@ impl Renderable for TaskViewState {
         
         let mut terminal = render_view_startup()?;
         let mut transition = Transition::Stay; 
-        
-        loop {
-            
+        let poll_interval = Duration::from_millis(10);
+        let mut last_poll_time = Instant::now();
+
+        loop { 
+            if last_poll_time.elapsed() >= poll_interval {
+                self.update();
+                last_poll_time = Instant::now();
+            }
+
             let widgets = vec![
                 term_user_action_list(),
                 term_user_task_entries_list(&self.items, self.selector.idx)
@@ -127,6 +145,113 @@ impl Renderable for TaskViewState {
         
         render_view_teardown(&mut terminal); 
         return Ok(transition);
+    }
+}
+
+impl<T: Storable> Renderable for CreateViewState<T> {
+    fn render(&mut self) -> io::Result<Transition> {
+        let mut terminal = render_view_startup()?;
+        let mut title_input = String::new();
+        let mut desc_input = String::new();
+        let mut is_title_active = true;
+
+        let result = loop {
+            terminal.draw(|f| {
+                let size = f.size();
+                let modal_width = size.width / 3 * 2;
+                let modal_height = 10;
+
+                let modal_area = tui::layout::Rect::new(
+                    (size.width - modal_width) / 2,
+                    (size.height - modal_height) / 2,
+                    modal_width,
+                    modal_height,
+                );
+
+                let chunks = Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints([
+                        Constraint::Percentage(50),
+                        Constraint::Percentage(50),
+                    ])
+                    .split(modal_area);
+
+                let modal_block = Block::default()
+                    .title("Create New Task")
+                    .borders(Borders::ALL)
+                    .style(Style::default().fg(Color::Gray));
+                f.render_widget(modal_block, modal_area);
+
+                let title_widget = Paragraph::new(title_input.as_str())
+                    .block(
+                        Block::default()
+                            .title("Task Title")
+                            .borders(Borders::ALL)
+                            .style(if is_title_active {
+                                Style::default().fg(Color::Yellow)
+                            } else {
+                                Style::default()
+                            }),
+                    );
+
+                let desc_widget = Paragraph::new(desc_input.as_str())
+                    .block(
+                        Block::default()
+                            .title("Task Description")
+                            .borders(Borders::ALL)
+                            .style(if !is_title_active {
+                                Style::default().fg(Color::Yellow)
+                            } else {
+                                Style::default()
+                            }),
+                    );
+
+                f.render_widget(desc_widget, chunks[1]);
+                f.render_widget(title_widget, chunks[0]);
+            })?;
+
+            match crossterm::event::read().unwrap() {
+                crossterm::event::Event::Key(event) => match event.code {
+                    crossterm::event::KeyCode::Char('q') => {
+                        break Ok(Transition::Pop);
+                    }
+                    crossterm::event::KeyCode::Char(c) => {
+                        if is_title_active {
+                            title_input.push(c);
+                        } else {
+                            desc_input.push(c);
+                        }
+                    }
+                    crossterm::event::KeyCode::Backspace => {
+                        if is_title_active {
+                            title_input.pop();
+                        } else {
+                            desc_input.pop();
+                        }
+                    }
+                    crossterm::event::KeyCode::Tab => {
+                        is_title_active = !is_title_active;
+                    }
+                    crossterm::event::KeyCode::Enter => {
+                        if !title_input.trim().is_empty() && !desc_input.trim().is_empty() {
+                            TaskStore::instance().put(
+                                Task::new(title_input.clone(), desc_input.clone())
+                            );
+                            break Ok(Transition::Pop);
+                        }
+                    }
+                    crossterm::event::KeyCode::Esc => {
+                        break Ok(Transition::Pop);
+                    }
+                    _ => {}
+                },
+                _ => {}
+            }
+        };
+
+        // Ensure the terminal is properly torn down before returning
+        render_view_teardown(&mut terminal)?;
+        result
     }
 }
 
@@ -176,7 +301,7 @@ fn term_user_task_list(tasks: &Vec<Task>,selection: &SelectionState) -> List<'st
     let task_list: Vec<ListItem> = tasks
         .iter()
         .enumerate()
-        .map(|(i, task)| style_list_item(&task.name, selection.idx, i))
+        .map(|(i, task)| style_list_item(&task.to_string(), selection.idx, i))
         .collect();
 
 

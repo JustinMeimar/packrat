@@ -3,6 +3,7 @@
 use crate::model::task::Task;
 use crate::model::task_entry::TaskEntry;
 use crate::model::store::TaskStore;
+use crate::model::convert::Storable;
 
 ///////////////////////////////////////////////////////////
 
@@ -31,12 +32,25 @@ pub struct EntryViewState {
     pub in_editor: bool,
 }
 
+#[derive(Debug)]
+pub struct CreateViewState<T: Storable> {
+    pub item: T,
+}
+
 ///////////////////////////////////////////////////////////
 
 impl SelectionState {
     
     pub fn new(max_idx: usize) -> Self {
         SelectionState {idx: 0, max_idx}
+    }
+    
+    pub fn expand(&mut self) { self.max_idx += 1; }
+    
+    /// clamp between 0 and n 
+    pub fn shrink(&mut self) {
+        self.max_idx = std::cmp::min(self.max_idx-1, 0);
+        self.idx = std::cmp::min(self.idx, 0)
     }
     
     pub fn incr(&mut self) {
@@ -65,6 +79,17 @@ impl MainViewState {
             items: tasks
         }
     }
+
+    pub fn update(&mut self) {
+        
+        // poll new items
+        self.items = TaskStore::instance()
+            .get_prefix(Task::key_all())
+            .unwrap(); 
+            
+        // upadte selector
+        self.selector.max_idx = self.items.len();
+    }
 }
 
 impl TaskViewState {
@@ -82,6 +107,12 @@ impl TaskViewState {
             task,
         }
     }
+
+    pub fn update(&mut self) {
+        self.items = TaskStore::instance()
+            .get_prefix(TaskEntry::key_task(self.task.id))
+            .unwrap(); 
+    }
 }
 
 impl EntryViewState {
@@ -92,5 +123,16 @@ impl EntryViewState {
             in_editor: false
         }
     }
+}
+
+impl<T: Storable> CreateViewState<T> {
+    
+    pub fn new(item: T) -> Self {
+
+        CreateViewState {
+            item,
+        }
+    }
+
 }
 

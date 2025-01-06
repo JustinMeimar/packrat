@@ -3,7 +3,8 @@
 use std::fmt;
 use std::collections::HashMap;
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
-use crate::ui::state::{TaskViewState, MainViewState, EntryViewState};
+use crate::model::task::Task;
+use crate::ui::state::{TaskViewState, MainViewState, EntryViewState, CreateViewState};
 use crate::ui::view::View;
 use crate::ui::view::Transition;
 
@@ -14,6 +15,7 @@ type KeyHandler = HashMap<KeyCode, Transition>;
 #[derive(Clone, Debug)]
 pub enum UserAction {
     Select,
+    New,
     Back,
     Quit,
 }
@@ -22,6 +24,7 @@ impl UserAction {
     pub fn all() -> Vec<UserAction> {
         vec![
             UserAction::Select,
+            UserAction::New,
             UserAction::Back,
             UserAction::Quit,
         ]
@@ -37,7 +40,8 @@ impl fmt::Display for UserAction {
         let text = match self {
             UserAction::Select => "Select (s)",  
             UserAction::Back => "Back (b)",  
-            UserAction::Quit => "Quit (q)"  
+            UserAction::New => "New (n)",  
+            UserAction::Quit => "Quit (q)",  
         };
         write!(fmt, "{}", text)
     }
@@ -60,11 +64,26 @@ impl Controlable for MainViewState {
 
             Event::Key(KeyEvent { code: KeyCode::Char('q') | KeyCode::Char('e'), .. }) 
                 => Transition::Quit, 
-            
+
+            Event::Key(KeyEvent { code: KeyCode::Char('n'), .. }) 
+                => {
+                    Transition::Push(
+                        View::CreateView(
+                            CreateViewState::new(
+                                Task::new("New Task", "Task Description")
+                            )
+                        )
+                    )
+                } 
+
             Event::Key(KeyEvent { code: KeyCode::Char('s') | KeyCode::Enter, .. })
                 => {
                     let item = self.items[self.selector.idx].clone();
-                    Transition::Push(View::TaskView(TaskViewState::new(item)))
+                    Transition::Push(
+                        View::TaskView(
+                            TaskViewState::new(item)
+                        )
+                    )
                 } 
             
             Event::Key(KeyEvent { code: KeyCode::Char('j') | KeyCode::Down, .. })

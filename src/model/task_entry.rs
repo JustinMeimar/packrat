@@ -50,7 +50,7 @@ impl Display for TaskEntry {
         let slice_size = std::cmp::min(self.content.len(), 30);
         let content_slice = &self.content[0..slice_size];
 
-        write!(f, "{}\t{}...",
+        write!(f, "• {}\t{}...",
             self.timestamp.format("%Y-%m-%d %H:%M:%S"),
             String::from_utf8_lossy(&content_slice)
         ) 

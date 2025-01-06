@@ -15,7 +15,7 @@ pub struct Task {
 
 impl Task {
     
-    pub fn new<T: Into<String>>(name: T, desc: T) -> Self  {
+    pub fn new<T: Into<String>, K: Into<String>>(name: T, desc: K) -> Self  {
         Task {
             id: Uuid::new_v4(),
             name: name.into(),
@@ -37,7 +37,7 @@ impl Task {
 
 impl Display for Task {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {} {}", self.id, self.name, self.desc) 
+        write!(f, "• {}", self.name) 
     } 
 }
 
