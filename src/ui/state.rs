@@ -3,7 +3,6 @@
 use crate::model::task::Task;
 use crate::model::task_entry::TaskEntry;
 use crate::model::store::TaskStore;
-use crate::model::convert::Storable;
 
 ///////////////////////////////////////////////////////////
 

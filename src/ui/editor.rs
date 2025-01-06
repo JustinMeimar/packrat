@@ -1,4 +1,3 @@
-use tempfile::NamedTempFile;
 
 pub fn open_editor() {
     // TODO

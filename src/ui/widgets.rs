@@ -1,12 +1,9 @@
 use crate::ui::control::UserAction;
 
 use tui::{ 
-    text::{Span, Spans, Text},
-    backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout},
-    style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Row, Table},
-    Terminal,
+    style::{Color, Style},
+    widgets::{Block, Borders, List, ListItem},
 };
 
 pub fn term_default_layout() -> Layout {

@@ -1,21 +1,17 @@
 use std::io;
 use std::io::{Stdout, Write, Read};
 use std::fs::File;
-use crossterm::{
-    event::{self, Event, KeyCode, KeyEvent},
-    execute,
-    terminal,
-};
+use crossterm::execute;
 use tui::{ 
-    text::{Span, Spans, Text},
+    text::{Span, Spans},
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Table, Row},
+    widgets::{Block, Borders, List, ListItem},
     Terminal,
 };
 use tempfile::NamedTempFile;
-use crate::ui::view::{Transition, View};
+use crate::ui::view::Transition;
 use crate::ui::state::{TaskViewState, MainViewState, EntryViewState};
 use crate::ui::control::Controlable;
 use crate::ui::widgets::{
@@ -25,7 +21,6 @@ use crate::ui::widgets::{
 use super::state::SelectionState;
 use crate::model::task::Task;
 use crate::model::task_entry::TaskEntry;
-use crate::model::store::TaskStore;
 use std::process::Command;
 
 ///////////////////////////////////////////////////////////

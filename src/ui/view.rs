@@ -1,13 +1,6 @@
 use std::io;
-use crate::model::task::Task;
-use crate::model::task_entry::TaskEntry;
-use crate::model::store::TaskStore;
 use crate::ui::state::{EntryViewState, MainViewState, TaskViewState};
 use crate::ui::render::Renderable;
-use std::process::Command;
-use std::path::Path;
-use std::thread;
-use std::time::Duration;
 
 ///////////////////////////////////////////////////////////
 
@@ -36,7 +29,7 @@ impl App {
     
     pub fn new() -> Self {
 
-        let mut view_state = MainViewState::new();
+        let view_state = MainViewState::new();
         let mut view_stack = Vec::new();
         view_stack.push(View::MainView(view_state));
 

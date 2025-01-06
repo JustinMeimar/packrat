@@ -1,13 +1,10 @@
 /// control.rs
 
 use std::fmt;
-use std::{collections::HashMap, io};
+use std::collections::HashMap;
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
 use crate::ui::state::{TaskViewState, MainViewState, EntryViewState};
 use crate::ui::view::View;
-use crate::model::task::Task;
-use crate::model::task_entry::TaskEntry;
-use crate::model::store::TaskStore;
 use crate::ui::view::Transition;
 
 ///////////////////////////////////////////////////////////
