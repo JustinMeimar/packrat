@@ -18,12 +18,7 @@ use crate::ui::view::Transition;
 use crate::ui::control::UserAction;
 use crate::ui::state::{TaskViewState, MainViewState, EntryViewState};
 use crate::ui::control::Controlable;
-use crate::ui::widgets::{
-    term_default_layout,
-    term_user_action_list,
-    list_factory,
-    table_factory,
-};
+use crate::ui::widgets::{list_factory, table_factory};
 use tui::buffer::Buffer;
 use super::state::{CreateViewState, SelectionState};
 use crate::model::task::Task;
@@ -247,49 +242,12 @@ impl Renderable for TaskViewState {
         self.selector.max_idx = self.items.len();
     }
 
-    // fn update(&mut self) { 
-    //     // poll new items
-    //     self.items = TaskStore::instance()
-    //         .get_prefix(Task::key_all())
-    //         .unwrap(); 
-    //         
-    //     // update selector
-    //     self.selector.max_idx = self.items.len();
-    // }
-
-    // fn render(&mut self) -> io::Result<Transition> {
-    //     
-    //     let mut terminal = render_view_startup()?;
-    //     let mut transition = Transition::Stay; 
-    //     let poll_interval = Duration::from_millis(10);
-    //     let mut last_poll_time = Instant::now();
-    //
-    //     loop { 
-    //         if last_poll_time.elapsed() >= poll_interval {
-    //             self.update();
-    //             last_poll_time = Instant::now();
-    //         }
-    //
-    //         let widgets = vec![
-    //             term_user_action_list(),
-    //             term_user_task_entries_list(&self.items, self.selector.idx)
-    //         ];
-    //
-    //         draw_widgets(&mut terminal, widgets);
-    //
-    //         transition = self.control();
-    //         match transition {
-    //             Transition::Stay => continue,
-    //             _ => break
-    //         }
-    //     }
-    //     
-    //     render_view_teardown(&mut terminal); 
-    //     return Ok(transition);
-    // }
 }
 
 impl<T: Storable> Renderable for CreateViewState<T> {
+
+    /// TODO: This implementation is fully rolled out for first iteration, needs
+    /// to be factored into the widget library
     fn render(&mut self) -> io::Result<Transition> {
         
         let mut terminal = render_view_startup()?;
@@ -365,8 +323,7 @@ impl<T: Storable> Renderable for CreateViewState<T> {
 
 ///////////////////////////////////////////////////////////
 
-fn render_view_startup() -> io::Result<Terminal<CrosstermBackend<Stdout>>> {
-    
+fn render_view_startup() -> io::Result<TerminalTy> { 
     // Flush stdout
     let mut stdout = std::io::stdout();
     execute!(stdout, crossterm::terminal::EnterAlternateScreen)?;
@@ -379,104 +336,12 @@ fn render_view_startup() -> io::Result<Terminal<CrosstermBackend<Stdout>>> {
     Ok(terminal)
 }
 
-fn render_view_teardown(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> io::Result<()> {
+fn render_view_teardown(terminal: &mut TerminalTy) -> io::Result<()> {
     crossterm::terminal::disable_raw_mode()?;
     execute!(terminal.backend_mut(), crossterm::terminal::LeaveAlternateScreen)?;
     terminal.show_cursor()?;
     Ok(())
 }
-
-pub fn term_mixed_layout(n: usize) -> Layout {
-    let constraints: Vec<Constraint> = vec![Constraint::Length(3); n];
-    Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(constraints.as_slice())
-}
-
-
-// Wrapper for the types of widgets we will be rendering
-// Enables a heterogenous Vec<WidgetType>
-enum WidgetType {
-    List(List<'static>),
-    Table(Table<'static>),
-}
-
-fn render_widgets_enum(
-    terminal: &mut Terminal<CrosstermBackend<Stdout>>,
-    widgets: Vec<WidgetType>
-) -> io::Result<()> {
-    terminal.draw(|f| {
-        let n_widgets = widgets.len();
-        let chunks = term_mixed_layout(n_widgets).split(f.size());
-        widgets.into_iter().enumerate().for_each(|(i, widget)| {
-            match widget {
-                WidgetType::List(list) => f.render_widget(list, chunks[i]),
-                WidgetType::Table(table) => f.render_widget(table, chunks[i]),
-            }
-        });
-    })?;
-    Ok(())
-}
-
-// fn render_widgets(terminal: &mut TerminalTy, )
-fn draw_widgets(
-    terminal: &mut Terminal<CrosstermBackend<Stdout>>,
-    widgets: Vec<List<'static>>
-) -> io::Result<()> {
-    
-    terminal
-        .draw(|f| {
-            let chunks =    term_default_layout().split(f.size());
-            widgets.iter().enumerate().for_each(|(i, w)| {
-                f.render_widget(w.clone(), chunks[i]);
-            });
-        })
-        .unwrap();
-    Ok(())
-}
-
-fn term_user_task_list(tasks: &Vec<Task>,selection: &SelectionState) -> List<'static> {
-    
-    let task_list: Vec<ListItem> = tasks
-        .iter()
-        .enumerate()
-        .map(|(i, task)| style_list_item(&task.to_string(), selection.idx, i))
-        .collect();
-
-
-    List::new(task_list)
-        .block(Block::default().title("Tasks").borders(Borders::ALL))
-        .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
-}
-
-fn term_user_task_entries_list(tasks: &Vec<TaskEntry>, idx: usize) -> List<'static> {
-    
-    let task_list: Vec<ListItem> = tasks
-        .iter()
-        .enumerate()
-        .map(|(i, entry)| style_list_item(&entry.to_string(), idx, i))
-        .collect();
-
-
-    List::new(task_list)
-        .block(Block::default().title("Tasks").borders(Borders::ALL))
-        .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
-}
-
-fn style_list_item(
-    item_text: &str, // Accept a string slice
-    selection_idx: usize,
-    map_idx: usize,
-) -> ListItem<'static> {
-    let style = if selection_idx == map_idx {
-        Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
-    } else {
-        Style::default()
-    };
-    ListItem::new(Spans::from(Span::styled(item_text.to_string(), style)))
-}
-
-///////////////////////////////////////////////////////////
 
 impl Renderable for EntryViewState {
     

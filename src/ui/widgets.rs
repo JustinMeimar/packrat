@@ -26,22 +26,7 @@ where
         .enumerate()
         .map(|(i, x)| ListItem::new(format!("{}", x)).style(list_styles[i]))
         .collect();
-    
-
-// fn style_list_item(
-//     item_text: &str, // Accept a string slice
-//     selection_idx: usize,
-//     map_idx: usize,
-// ) -> ListItem<'static> {
-//     let style = if selection_idx == map_idx {
-//         Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
-//     } else {
-//         Style::default()
-//     };
-//     ListItem::new(Spans::from(Span::styled(item_text.to_string(), style)))
-// }
-
-
+ 
     AnyWidget::List(
         List::new(items)
             .block(Block::default().title(list_title.into()).borders(Borders::ALL))
@@ -86,95 +71,21 @@ where
 
 ///////////////////////////////////////////////////////////
 
-pub fn term_default_layout() -> Layout {
-    Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(15), Constraint::Percentage(85)].as_ref())
-}
-
-pub fn term_user_action_list() -> List<'static> {
-
-    let items: Vec<ListItem> = UserAction::all()
-        .iter()
-        .map(|x| ListItem::new(format!("{}", x)))
-        .collect();
-    
-    List::new(items)
-        .block(Block::default().title("Controls").borders(Borders::ALL))
-        .style(Style::default().fg(Color::Gray))
-}
-
-// pub fn term_user_action_table() -> Table<'static> {
-//     // Create rows for the table
-//     let items: Vec<Row> = vec![Row::new(
-//         UserAction::all()
-//             .iter()
-//             .map(|x| format!("{}", x)) // Convert each action to a string
-//             .map(Cell::from)           // Wrap each string in a Cell
-//             .collect::<Vec<Cell>>(),   // Collect the cells into a row
-//     )];
-//
-//     // Create constraints
-//     let constraints = UserAction::all()
-//         .iter()
-//         .map(|_| Constraint::Length(10))
-//         .collect::<Vec<Constraint>>();
-//
-//     // Clone the constraints into the Table
-//     Table::new(items)
-//         .block(Block::default()
-//             .title("Controls")
-//             .borders(Borders::ALL))
-//         .widths(constraints.into()) // Clone the constraints
-//         .style(Style::default().fg(Color::Gray))
+// pub fn term_default_layout() -> Layout {
+//     Layout::default()
+//         .direction(Direction::Vertical)
+//         .constraints([Constraint::Percentage(15), Constraint::Percentage(85)].as_ref())
 // }
 //
-
-// pub fn term_user_action_table() -> Table<'static> {
-//     // Create rows for the table
-//     let items: Vec<Row> = vec![Row::new(
-//         UserAction::all()
-//             .iter()
-//             .map(|x| format!("{}", x)) // Convert each action to a string
-//             .map(Cell::from)           // Wrap each string in a Cell
-//             .collect::<Vec<Cell>>(),   // Collect the cells into a row
-//     )];
+// pub fn term_user_action_list() -> List<'static> {
 //
-//     // Allocate constraints separately to avoid lifetime issues
-//     let constraints: Vec<Constraint> = UserAction::all()
+//     let items: Vec<ListItem> = UserAction::all()
 //         .iter()
-//         .map(|_| Constraint::Length(10))
+//         .map(|x| ListItem::new(format!("{}", x)))
 //         .collect();
-//
-//     // Create the table
-//     Table::new(items)
-//         .block(Block::default()
-//         .title("Controls")
-//         .borders(Borders::ALL))
-//         .widths(&constraints.clone()) // Pass reference to the constraints
+//     
+//     List::new(items)
+//         .block(Block::default().title("Controls").borders(Borders::ALL))
 //         .style(Style::default().fg(Color::Gray))
 // }
 
-
-// pub fn term_user_action_table() -> Table<'static> {
-//     let items: Vec<Row> = vec![Row::new(
-//         UserAction::all()
-//             .iter()
-//             .map(|x| format!("{}", x)) // Convert each action to a string
-//             .map(Cell::from)           // Wrap each string in a Cell
-//             .collect::<Vec<Cell>>(),   // Collect the cells into a row
-//     )];
-//
-//     Table::new(items)
-//         .block(Block::default()
-//         .title("Controls")
-//         .borders(Borders::ALL))
-//         .widths(
-//             &UserAction::all()
-//                 .iter()
-//                 .map(|_| Constraint::Length(10))
-//                 .collect::<Vec<Constraint>>(),
-//         )
-//         .style(Style::default().fg(Color::Gray))
-// }
-//
