@@ -5,7 +5,7 @@ use crate::model::task::Task;
 
 ///////////////////////////////////////////////////////////
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum View {
     MainView(MainViewState),
     TaskView(TaskViewState),
@@ -13,7 +13,7 @@ pub enum View {
     CreateView(CreateViewState<Task>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Transition {
     Push(View),
     Pop,

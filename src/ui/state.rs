@@ -9,34 +9,36 @@ use std::time::{Duration, Instant};
 
 ///////////////////////////////////////////////////////////
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct SelectionState {
     pub idx: usize,     // index of current selection
     pub max_idx: usize, // bounds of selection
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct MainViewState {
     pub selector: SelectionState,
     pub items: Vec<Task>,
     pub poll_interval: Duration,
-    pub last_poll_time: Instant, 
+    pub last_poll_time: Instant,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct TaskViewState {
     pub selector: SelectionState,
     pub task: Task,
     pub items: Vec<TaskEntry>,
+    pub poll_interval: Duration,
+    pub last_poll_time: Instant,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct EntryViewState {
     pub task_entry: TaskEntry,
     pub in_editor: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct CreateViewState<T: Storable> {
     pub item: T,
     pub inputs: Vec<String>, 
@@ -102,6 +104,8 @@ impl TaskViewState {
             selector: SelectionState::new(task_entries.len()),
             items: task_entries,
             task,
+            poll_interval: Duration::from_millis(100),
+            last_poll_time: Instant::now(),
         }
     }
 }
