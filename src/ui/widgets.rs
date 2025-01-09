@@ -1,15 +1,14 @@
-use crate::ui::control::UserAction;
-use tui::{ 
-    text::{Span, Spans},
-    backend::{Backend, CrosstermBackend},
-    layout::{Constraint, Direction, Layout},
-    style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Table, Widget, Row, Cell},
-    Terminal,
-};
-
+use crate::{model::convert::Storable, ui::control::UserAction};
 use std::fmt::Display;
 use crate::ui::render::AnyWidget;
+use tui::{ 
+    layout::Constraint,
+    style::{Color, Modifier, Style},
+    widgets::{Block, Borders, List, ListItem, Table, Row, Cell},
+};
+
+
+////////////////////////////////////////////////////////////
 
 pub fn list_factory<'a, T, K>(
     list_items: Vec<T>,
@@ -71,21 +70,25 @@ where
 
 ///////////////////////////////////////////////////////////
 
-// pub fn term_default_layout() -> Layout {
-//     Layout::default()
-//         .direction(Direction::Vertical)
-//         .constraints([Constraint::Percentage(15), Constraint::Percentage(85)].as_ref())
-// }
-//
-// pub fn term_user_action_list() -> List<'static> {
-//
-//     let items: Vec<ListItem> = UserAction::all()
-//         .iter()
-//         .map(|x| ListItem::new(format!("{}", x)))
-//         .collect();
-//     
-//     List::new(items)
-//         .block(Block::default().title("Controls").borders(Borders::ALL))
-//         .style(Style::default().fg(Color::Gray))
-// }
+pub fn control_widget<'a>() -> AnyWidget<'a> {
+    let control_items = UserAction::all(); 
+    table_factory(vec![control_items], "Controls")
+}
+
+pub fn map_list_styles<T>(items: &Vec<T>, select_idx: usize) -> Vec<Style>
+where
+    T: Storable
+{
+    
+    items.iter().enumerate().map(|(i, t)| {
+        if i == select_idx {
+            Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD)
+        } else {
+            Style::default()
+        }
+    }).collect()
+}
+
 

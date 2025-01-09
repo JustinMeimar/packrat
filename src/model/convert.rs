@@ -1,6 +1,5 @@
 // convert.rs
 
-use crate::model::task_entry::TaskEntry;
 use std::fmt::Display;
 
 ///////////////////////////////////////////////////////////

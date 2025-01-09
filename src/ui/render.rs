@@ -3,30 +3,26 @@ use std::io::{Stdout, Write, Read};
 use std::fs::File;
 use crossterm::execute;
 use tui::layout::Rect;
-use tui::{ 
-    text::{Span, Spans},
-    backend::{Backend, CrosstermBackend},
-    layout::{Constraint, Direction, Layout},
-    style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Table, Widget, Row, Cell},
-    Terminal,
-};
 use tempfile::NamedTempFile;
 use crate::model::convert::Storable;
 use crate::model::store::TaskStore;
 use crate::ui::view::Transition;
-use crate::ui::control::UserAction;
 use crate::ui::state::{TaskViewState, MainViewState, EntryViewState};
 use crate::ui::control::Controlable;
-use crate::ui::widgets::{list_factory, table_factory};
+use crate::ui::widgets::{list_factory, control_widget, map_list_styles};
 use tui::buffer::Buffer;
-use super::state::{CreateViewState, SelectionState};
+use super::state::CreateViewState;
 use crate::model::task::Task;
 use crate::model::task_entry::TaskEntry;
 use std::process::Command;
-use std::time::{Duration, Instant};
-use crossterm::event::{self, Event, KeyEvent};
-
+use std::time::Instant;
+use tui::{ 
+    backend::{Backend, CrosstermBackend},
+    layout::{Constraint, Direction, Layout},
+    style::{Color, Style},
+    widgets::{Block, Borders, List, Paragraph, Table, Widget},
+    Terminal,
+};
 ///////////////////////////////////////////////////////////
 
 type TerminalTy = Terminal<CrosstermBackend<Stdout>>;
@@ -88,26 +84,12 @@ impl Renderable for MainViewState {
     
     // Render the main view controls and the list of tasks
     fn widgets(&mut self) -> io::Result<Vec<AnyWidget>> {
-          
-        let control_items = UserAction::all(); 
-        let control_widget = table_factory(vec![control_items], "Controls");
-        
+                  
         let task_items: Vec<Task> = TaskStore::instance().get_prefix(Task::key_all()).unwrap(); 
-        /// I work so had to minify, then the styling takes up half the lines...grrr
-        /// Potentially, list_factory can take a lambda and we can just copy over select idx
-        let task_styles = task_items.iter().enumerate().map(|(i, t)| {
-            if i == self.selector.idx {
-                Style::default()
-                    .fg(Color::Yellow)
-                    .add_modifier(Modifier::BOLD)
-            } else {
-                Style::default()
-            }
-        }).collect();
-
+        let task_styles = map_list_styles(&task_items, self.selector.idx);
         let task_widget = list_factory(task_items, task_styles, "Tasks");
         
-        Ok(vec![control_widget, task_widget])
+        Ok(vec![control_widget(), task_widget])
     } 
 
     /// Check the poll interval 
@@ -133,33 +115,22 @@ impl Renderable for MainViewState {
     fn render(&mut self) -> io::Result<Transition> {
 
         let mut terminal = render_view_startup()?;
-        let transition = loop {
-
-            // poll for updates
-            self.poll();
-            
-            // divide the screen, get the widgets and draw 
-            terminal.draw(|f| {
-                let sizes = self.chunks(f.size()); 
-                let widgets = self.widgets().unwrap(); 
-                widgets.into_iter().enumerate().for_each(|(i, w)| {
-                    f.render_widget(w, sizes[i]); 
-                });
-            });          
-
-            // listen for keyboard events
-            let transition = self.control();
-            if transition != Transition::Stay {
-                break transition;
-            }
-        };
-        
+        let transition = render_view(self, &mut terminal, Self::control);        
         render_view_teardown(&mut terminal);
-        Ok(transition)
+        transition
     } 
 }
 
 impl Renderable for TaskViewState {
+    
+    // Draw the View on the terminal
+    fn render(&mut self) -> io::Result<Transition> {
+
+        let mut terminal = render_view_startup()?;
+        let transition = render_view(self, &mut terminal, Self::control);  
+        render_view_teardown(&mut terminal);
+        transition
+    }
 
     // Create the chunks that widgets will render ontop of 
     fn chunks(&self, frame: Rect) -> Vec<Rect> {        
@@ -173,59 +144,16 @@ impl Renderable for TaskViewState {
 
     // Render the main view controls and the list of tasks
     fn widgets(&mut self) -> io::Result<Vec<AnyWidget>> {
-          
-        let control_items = UserAction::all(); 
-        let control_widget = table_factory(vec![control_items], "Controls");
-        
+           
         let task_items: Vec<TaskEntry> = TaskStore::instance()
             .get_prefix(TaskEntry::key_task(self.task.id))
             .unwrap(); 
-        
-        /// I work so had to minify, then the styling takes up half the lines...grrr
-        /// Potentially, list_factory can take a lambda and we can just copy over select idx
-        let task_styles = task_items.iter().enumerate().map(|(i, t)| {
-            if i == self.selector.idx {
-                Style::default()
-                    .fg(Color::Yellow)
-                    .add_modifier(Modifier::BOLD)
-            } else {
-                Style::default()
-            }
-        }).collect();
 
+        let task_styles = map_list_styles(&task_items, self.selector.idx); 
         let task_widget = list_factory(task_items, task_styles, "Tasks");
         
-        Ok(vec![control_widget, task_widget])
+        Ok(vec![control_widget(), task_widget])
     } 
-
-    // Draw the View on the terminal
-    fn render(&mut self) -> io::Result<Transition> {
-
-        let mut terminal = render_view_startup()?;
-        let transition = loop {
-
-            // poll for updates
-            self.poll();
-            
-            // divide the screen, get the widgets and draw 
-            terminal.draw(|f| {
-                let sizes = self.chunks(f.size()); 
-                let widgets = self.widgets().unwrap(); 
-                widgets.into_iter().enumerate().for_each(|(i, w)| {
-                    f.render_widget(w, sizes[i]); 
-                });
-            });          
-
-            // listen for keyboard events
-            let transition = self.control();
-            if transition != Transition::Stay {
-                break transition;
-            }
-        };
-        
-        render_view_teardown(&mut terminal);
-        Ok(transition)
-    }
 
     /// Check the poll interval 
     fn poll(&mut self) {
@@ -234,15 +162,107 @@ impl Renderable for TaskViewState {
             self.last_poll_time = Instant::now();
         }
     }
-
+    
+    /// Refresh the task entries
     fn update(&mut self) {
         self.items = TaskStore::instance()
             .get_prefix(TaskEntry::key_task(self.task.id))
             .unwrap(); 
         self.selector.max_idx = self.items.len();
     }
-
 }
+
+///////////////////////////////////////////////////////////
+
+pub fn render_view<R>(
+    state: &mut R,
+    terminal: &mut Terminal<impl Backend>,
+    control_handler: impl Fn(&mut R) -> Transition,
+) -> io::Result<Transition>
+where
+    R: Renderable,
+{
+    loop {
+        state.poll();
+        terminal.draw(|f| {
+            let chunks = state.chunks(f.size());
+            let widgets = state.widgets().unwrap();
+            widgets.into_iter().enumerate().for_each(|(i, w)| {
+                f.render_widget(w, chunks[i]);
+            });
+        })?;
+
+        let transition = control_handler(state);
+        if transition != Transition::Stay {
+            return Ok(transition);
+        }
+    }
+}
+
+fn render_view_startup() -> io::Result<TerminalTy> { 
+    // Flush stdout
+    let mut stdout = std::io::stdout();
+    execute!(stdout, crossterm::terminal::EnterAlternateScreen)?;
+
+    // Initialize the terminal
+    let backend = CrosstermBackend::new(stdout);
+    let terminal = Terminal::new(backend)?;
+    crossterm::terminal::enable_raw_mode()?;
+
+    Ok(terminal)
+}
+
+fn render_view_teardown(terminal: &mut TerminalTy) -> io::Result<()> {
+    crossterm::terminal::disable_raw_mode()?;
+    execute!(terminal.backend_mut(), crossterm::terminal::LeaveAlternateScreen)?;
+    terminal.show_cursor()?;
+    Ok(())
+}
+
+///////////////////////////////////////////////////////////
+
+impl Renderable for EntryViewState {
+    
+    // A hacky, happy-path implementation for now
+    fn render(&mut self) -> io::Result<Transition> {
+        
+        // get the contents of selected task entry
+        let content = &self.task_entry.content;
+        
+        // open a temporary file 
+        let mut tmp_file = NamedTempFile::new()
+            .map_err(|e| format!("Failed to create tmpfile: {}", e))
+            .unwrap();
+        
+        // write the contents into the file 
+        tmp_file
+            .write_all(&content)
+            .map_err(|e| format!("Failed to write to temp file: {}", e));
+
+        // open the editor
+        let status = Command::new("nvim")
+            .arg(tmp_file.path())
+            .status()
+            .expect("Failed to open editor");
+
+        if !status.success() {
+            eprintln!("Neovim exited with an error."); 
+        }
+
+        // read the contents back
+        let mut content_updated = String::new();
+        File::open(&tmp_file)?
+            .read_to_string(&mut content_updated)?;
+
+        // synchronize the updates
+        self.task_entry.content = content_updated.into_bytes();  
+        TaskStore::instance().put(self.task_entry.clone());
+        
+        Ok(Transition::Pop)
+    }
+}
+
+///////////////////////////////////////////////////////////
 
 impl<T: Storable> Renderable for CreateViewState<T> {
 
@@ -321,65 +341,3 @@ impl<T: Storable> Renderable for CreateViewState<T> {
     }
 }
 
-///////////////////////////////////////////////////////////
-
-fn render_view_startup() -> io::Result<TerminalTy> { 
-    // Flush stdout
-    let mut stdout = std::io::stdout();
-    execute!(stdout, crossterm::terminal::EnterAlternateScreen)?;
-
-    // Initialize the terminal
-    let backend = CrosstermBackend::new(stdout);
-    let terminal = Terminal::new(backend)?;
-    crossterm::terminal::enable_raw_mode()?;
-
-    Ok(terminal)
-}
-
-fn render_view_teardown(terminal: &mut TerminalTy) -> io::Result<()> {
-    crossterm::terminal::disable_raw_mode()?;
-    execute!(terminal.backend_mut(), crossterm::terminal::LeaveAlternateScreen)?;
-    terminal.show_cursor()?;
-    Ok(())
-}
-
-impl Renderable for EntryViewState {
-    
-    // A hacky, happy-path implementation for now
-    fn render(&mut self) -> io::Result<Transition> {
-        
-        // get the contents of selected task entry
-        let content = &self.task_entry.content;
-        
-        // open a temporary file 
-        let mut tmp_file = NamedTempFile::new()
-            .map_err(|e| format!("Failed to create tmpfile: {}", e))
-            .unwrap();
-        
-        // write the contents into the file 
-        tmp_file
-            .write_all(&content)
-            .map_err(|e| format!("Failed to write to temp file: {}", e));
-
-        // open the editor
-        let status = Command::new("nvim")
-            .arg(tmp_file.path())
-            .status()
-            .expect("Failed to open editor");
-
-        if !status.success() {
-            eprintln!("Neovim exited with an error."); 
-        }
-
-        // read the contents back
-        let mut content_updated = String::new();
-        File::open(&tmp_file)?
-            .read_to_string(&mut content_updated)?;
-
-        // synchronize the updates
-        self.task_entry.content = content_updated.into_bytes();  
-        TaskStore::instance().put(self.task_entry.clone());
-        
-        Ok(Transition::Pop)
-    }
-}
