@@ -11,7 +11,7 @@ use crate::ui::state::{TaskViewState, MainViewState, EntryViewState};
 use crate::ui::control::Controlable;
 use crate::ui::widgets::{list_factory, control_widget, map_list_styles};
 use tui::buffer::Buffer;
-use super::state::CreateViewState;
+use super::state::{CreateViewState, SelectionState};
 use crate::model::task::Task;
 use crate::model::task_entry::TaskEntry;
 use std::process::Command;
@@ -34,6 +34,11 @@ type TerminalTy = Terminal<CrosstermBackend<Stdout>>;
 pub enum AnyWidget<'a> {
     List(List<'a>),
     Table(Table<'a>),
+}
+
+pub enum ControlOption {
+    T(Transition),
+    E(Event),
 }
 
 impl<'a> Widget for AnyWidget<'a> {
@@ -70,15 +75,14 @@ pub trait Renderable {
 
 ///////////////////////////////////////////////////////////
 
+use crossterm::event::{self, Event, KeyCode, KeyEvent};
+use crate::ui::view::View;
 impl Renderable for MainViewState {
        
     // Create the chunks that widgets will render ontop of 
     fn chunks(&self, frame: Rect) -> Vec<Rect> {        
         Layout::default()
-            .constraints([
-                Constraint::Length(3),
-                Constraint::Max(50) // fill remaining height
-            ].as_ref())
+            .constraints([Constraint::Length(3),Constraint::Max(50)].as_ref())
             .split(frame)
     }
     
@@ -115,10 +119,59 @@ impl Renderable for MainViewState {
     fn render(&mut self) -> io::Result<Transition> {
 
         let mut terminal = render_view_startup()?;
-        let transition = render_view(self, &mut terminal, Self::control);        
+        let transition = render_view(self, &mut terminal, Self::controler);        
         render_view_teardown(&mut terminal);
         transition
     } 
+
+    fn controler(&mut self) -> Transition {
+
+        match default_controls(&mut self.selector) {
+    
+            // A default case was handled
+            ControlOption::T(t) => t,
+            
+            // A custom case occurred
+            ControlOption::E(e) => { 
+                match e { 
+                    /// What to do on "edit"
+                    Event::Key(KeyEvent { code: KeyCode::Char('e'), .. }) 
+                        => {
+                            let item = self.items[self.selector.idx].clone();
+                            Transition::Push(
+                                View::CreateView(
+                                    CreateViewState::new(
+                                        item.clone()
+                                    )
+                                )
+                            )
+                        } 
+                    /// What to do on "new"
+                    Event::Key(KeyEvent { code: KeyCode::Char('n'), .. }) 
+                        => {
+                            Transition::Push(
+                                View::CreateView(
+                                    CreateViewState::new(
+                                        Task::new("New Task", "Task Description")
+                                    )
+                                )
+                            )
+                        } 
+                    /// What to do on "select"
+                    Event::Key(KeyEvent { code: KeyCode::Char('s') | KeyCode::Enter, .. })
+                        => {
+                            let item = self.items[self.selector.idx].clone();
+                            Transition::Push(
+                                View::TaskView(
+                                    TaskViewState::new(item)
+                                )
+                            )
+                        }
+                    _ => Transition::Stay
+                }
+            }
+        }
+    }
 }
 
 impl Renderable for TaskViewState {
@@ -127,7 +180,7 @@ impl Renderable for TaskViewState {
     fn render(&mut self) -> io::Result<Transition> {
 
         let mut terminal = render_view_startup()?;
-        let transition = render_view(self, &mut terminal, Self::control);  
+        let transition = render_view(self, &mut terminal, Self::controler);  
         render_view_teardown(&mut terminal);
         transition
     }
@@ -170,6 +223,39 @@ impl Renderable for TaskViewState {
             .unwrap(); 
         self.selector.max_idx = self.items.len();
     }
+
+    fn controler(&mut self) -> Transition {
+
+        match default_controls(&mut self.selector) {
+    
+            // A default case was handled
+            ControlOption::T(t) => t,
+            
+            // A custom case occurred
+            ControlOption::E(e) => { 
+                match e {  
+                    /// What to do on "new"
+                    Event::Key(KeyEvent { code: KeyCode::Char('n'), .. }) 
+                        => {
+                            Transition::Push(
+                                View::CreateView(
+                                    CreateViewState::new(
+                                        Task::new("New Task", "Task Description")
+                                    )
+                                )
+                            )
+                        } 
+                    /// What to do on "select"
+                    Event::Key(KeyEvent { code: KeyCode::Char('s') | KeyCode::Enter, .. })
+                        => {
+                            let item = self.items[self.selector.idx].clone();
+                            Transition::Push(View::EntryView(EntryViewState::new(item)))
+                        } 
+                    _ => Transition::Stay
+                }
+            }
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////
@@ -197,6 +283,34 @@ where
             return Ok(transition);
         }
     }
+}
+
+/// Try to match one of the default events, in which case return the appropriate
+/// transition, otherwise return the event read so it can be dealt with manually
+pub fn default_controls(selector: &mut SelectionState) -> ControlOption {
+    
+    let event: Event = event::read().unwrap();
+    match event {
+
+        Event::Key(KeyEvent { code: KeyCode::Char('q'), .. }) 
+            => ControlOption::T(Transition::Quit), 
+        
+        Event::Key(KeyEvent { code: KeyCode::Char('b'), .. })
+            => ControlOption::T(Transition::Pop),
+        
+            Event::Key(KeyEvent { code: KeyCode::Char('j') | KeyCode::Down, .. })
+            => {
+                selector.decr(); ControlOption::T(Transition::Stay)
+            }, 
+        
+        Event::Key(KeyEvent { code: KeyCode::Char('k') | KeyCode::Up, .. })
+            => {
+                selector.incr();
+                ControlOption::T(Transition::Stay)
+            },   
+        _ 
+            => ControlOption::E(event),
+    } 
 }
 
 fn render_view_startup() -> io::Result<TerminalTy> { 
