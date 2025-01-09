@@ -1,10 +1,8 @@
 /// main.rs
-
 use std::io;
 use packrat::model::task::Task;
 use packrat::model::store::TaskStore;
 use packrat::model::task_entry::TaskEntry;
-// use packrat::model::convert::BytesConvertible;
 use packrat::ui::view;
 
 ///////////////////////////////////////////////////////////

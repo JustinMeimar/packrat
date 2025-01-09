@@ -1,6 +1,8 @@
+/// view.rs
+
 use std::io;
 use crate::ui::state::{EntryViewState, MainViewState, TaskViewState, CreateViewState};
-use crate::ui::render::Renderable;
+use crate::ui::render::renderable::Renderable;
 use crate::model::task::Task;
 
 ///////////////////////////////////////////////////////////
@@ -55,6 +57,9 @@ impl App {
             match transition {
                 Transition::Push(v) => self.view_stack.push(v),
                 Transition::Pop => {
+                    if self.view_stack.len() == 1 {
+                        break;
+                    }
                     self.view_stack.pop();
                 },
                 Transition::Quit => break,
