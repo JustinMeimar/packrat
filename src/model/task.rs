@@ -1,6 +1,7 @@
 // task.rs
 
 use std::fmt;
+use chrono::{Local, NaiveDate};
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 use std::fmt::Display;
@@ -11,6 +12,7 @@ pub struct Task {
     pub id: uuid::Uuid,
     pub name: String,
     pub desc: String,
+    pub created_date: NaiveDate,
 }
 
 impl Task {
@@ -20,10 +22,10 @@ impl Task {
             id: Uuid::new_v4(),
             name: name.into(),
             desc: desc.into(),
+            created_date: Local::today().naive_local(),
         }
     }
    
-
     /// stateless key pattern for retrieving all task entries
     pub fn key_all() -> &'static str {
         "task:"

@@ -144,6 +144,36 @@ impl FormRenderable for CreateEntryViewState {
         Ok(vec![title_widget, desc_widget])
     }
 
+    /// Render a dialgoue box overtop of the current view, taking the user input.
+    fn render(&mut self) -> io::Result<Transition> {
+        
+        let mut terminal = render_view_startup()?;
+        let mut transition = Transition::Stay; 
+
+        let result = loop {
+            terminal.draw(|f| {
+                
+                let chunks: Vec<Rect> = self.chunks(f.size()); 
+                let widgets = self.widgets().unwrap();
+                
+                widgets.into_iter().enumerate().for_each(|(i, w)| {
+                    f.render_widget(w, chunks[i]);
+                });
+ 
+            })?;
+            
+            transition = self.controller(); 
+            match transition {
+                Transition::Stay => continue,
+                _ => break
+            } 
+        };
+
+        // Ensure the terminal is properly torn down before returning
+        render_view_teardown(&mut terminal)?;
+        Ok(transition)
+    }
+
     fn controller(&mut self) -> Transition {
         match event::read().unwrap() {
             Event::Key(KeyEvent { code: KeyCode::Esc, .. }) => Transition::Pop,
@@ -161,9 +191,9 @@ impl FormRenderable for CreateEntryViewState {
                 Transition::Stay
             }
             Event::Key(KeyEvent { code: KeyCode::Enter, .. }) => {
-                // TaskStore::instance().put(TaskEntry::new(
-                //         self.task.clone(), inputs[1].clone()
-                //     ));
+                TaskStore::instance().put(TaskEntry::new(
+                        self.item.id, vec![] 
+                    ));
                 Transition::Pop
             }
             _ => Transition::Stay,

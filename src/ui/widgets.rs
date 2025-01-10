@@ -1,6 +1,7 @@
 use crate::{model::convert::Storable, ui::control::UserAction};
 use std::fmt::Display;
 use crate::ui::render::renderable::AnyWidget;
+use crate::model::task::Task;
 use tui::{ 
     layout::Constraint,
     style::{Color, Modifier, Style},
@@ -33,44 +34,6 @@ where
     )
 }
 
-/// Create a table widget from a vector of vectors. The inner vector represents a row,
-/// by convention the first row is used as the column labels.
-pub fn table_factory<'a, T, K>(
-    grid_items: Vec<Vec<T>>,
-    table_title: K,
-) -> AnyWidget<'a>
-where
-    T: Display,
-    K: Into<String>,
-{
-    let table_rows: Vec<Row<'a>> = grid_items
-        .iter()
-        .skip(1)
-        .map(|row_items| {
-            Row::new(
-                row_items
-                    .iter()
-                    .map(|item| Cell::from(item.to_string()))
-                    .collect::<Vec<Cell>>(),
-            )
-        })
-        .collect();
-
-    let column_names: Vec<String> = grid_items
-        .first()
-        .unwrap()
-        .iter()
-        .map(|x| x.to_string())
-        .collect();
-
-    AnyWidget::Table(
-        Table::new(table_rows)
-            .header(Row::new(column_names))
-            .block(Block::default().title(table_title.into()).borders(Borders::ALL))
-            .widths(&[Constraint::Min(100)])
-    )
-}
-
 pub fn paragraph_factory<'a, T>(title: T, init_text: T, highlight: bool) -> AnyWidget<'a>
 where
     T: Into<String>
@@ -91,18 +54,54 @@ where
 }
 
 ///////////////////////////////////////////////////////////
-
 pub fn control_widget<'a>() -> AnyWidget<'a> {
-    // Collect actions into a Vec<String>
-    let actions: Vec<String> = UserAction::all()
+    
+    let control_string = UserAction::all()
         .iter()
         .map(|action| action.to_string())
+        .collect::<Vec<_>>()
+        .join(" | ");
+
+    let control_row = Row::new(vec![Cell::from(control_string)]);
+    let table = Table::new(vec![control_row])
+        .block(
+            Block::default()
+                .title("Controls")
+                .borders(Borders::ALL),
+        )
+        .widths(&[Constraint::Percentage(100)])
+        .column_spacing(1);
+
+    AnyWidget::Table(table)
+}
+
+pub fn task_table<'a>(tasks: Vec<Task>, select_idx: usize) -> AnyWidget<'a> {
+    
+    let style = Style::default();
+    let task_rows: Vec<Row> = tasks
+        .iter()
+        .enumerate()
+        .map(|(i, t)| Row::new(vec![
+                Cell::from(format!(" • {}", t.name.clone())),
+                Cell::from(format!("{}", t.created_date)),
+                Cell::from(t.desc.clone()),
+        ]).style(if i == select_idx {
+            style.fg(Color::Yellow).add_modifier(Modifier::BOLD)
+        } else {
+            style
+        }))
         .collect();
 
-    let control_string = actions.join(" | ");
-    let grid_items = vec![vec![control_string]];
-
-    table_factory(grid_items, "Controls")
+    let table = Table::new(task_rows)
+        .block(Block::default().title("Tasks").borders(Borders::ALL))
+        .widths(&[
+            Constraint::Percentage(30),
+            Constraint::Percentage(30),
+            Constraint::Percentage(40),
+        ])
+        .column_spacing(2);
+    
+    AnyWidget::Table(table) 
 }
 
 pub fn map_list_styles<T>(items: &Vec<T>, select_idx: usize) -> Vec<Style>

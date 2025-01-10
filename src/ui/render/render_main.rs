@@ -3,7 +3,7 @@ use tui::layout::Rect;
 use crate::model::store::TaskStore;
 use crate::ui::view::Transition;
 use crate::ui::state::{TaskViewState, MainViewState, CreateTaskViewState};
-use crate::ui::widgets::{list_factory, control_widget, map_list_styles};
+use crate::ui::widgets::{list_factory, control_widget, map_list_styles, task_table};
 use crate::model::task::Task;
 use std::time::Instant;
 use tui::layout::{Constraint, Layout};
@@ -28,9 +28,20 @@ impl Renderable for MainViewState {
     /// Render the main view controls and the list of tasks
     fn widgets(&mut self) -> io::Result<Vec<AnyWidget>> {
                   
-        let task_items: Vec<Task> = TaskStore::instance().get_prefix(Task::key_all()).unwrap(); 
-        let task_styles = map_list_styles(&task_items, self.selector.idx);
-        let task_widget = list_factory(task_items, task_styles, "Tasks");
+        let task_items: Vec<Task> = TaskStore::instance()
+            .get_prefix(Task::key_all())
+            .unwrap();
+            
+        let task_widget = task_table(task_items, self.selector.idx);
+        // let task_styles = map_list_styles(&task_items, self.selector.idx);
+        // 
+        // let task_grid: Vec<Vec<String>> = task_items
+        //     .iter()
+        //     .map(|t| vec![t.id.to_string(), t.name.clone()])
+        //     .collect();
+        //
+        // let task_widget = list_factory(task_items, task_styles, "Tasks");
+        // let task_widget = table_factory(task_grid, "Tasks");
         
         Ok(vec![control_widget(), task_widget])
     } 
