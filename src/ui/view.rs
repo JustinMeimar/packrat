@@ -2,19 +2,22 @@
 
 use std::io;
 use crate::model::task_entry::TaskEntry;
-use crate::ui::state::{EntryViewState, MainViewState, TaskViewState, CreateViewState};
+use crate::ui::state::{EntryViewState, MainViewState, TaskViewState,
+                       CreateTaskViewState, CreateEntryViewState};
 use crate::ui::render::renderable::Renderable;
+use crate::ui::render::render_create::FormRenderable;
 use crate::model::task::Task;
 
 ///////////////////////////////////////////////////////////
 
+/// TODO: Fix some confusing naming
 #[derive(Debug, PartialEq)]
 pub enum View {
-    MainView(MainViewState),
-    TaskView(TaskViewState),
-    EntryView(EntryViewState),
-    CreateTaskView(CreateViewState<Task>),
-    CreateTaskEntryView(CreateViewState<TaskEntry>),
+    MainView(MainViewState),                // list of tasks
+    TaskView(TaskViewState),                // list of task entries
+    EntryView(EntryViewState),              // view an entry (vim)
+    CreateTaskView(CreateTaskViewState),    // form for new Task
+    CreateEntryView(CreateEntryViewState),  // form for new TaskEntry
 }
 
 #[derive(Debug, PartialEq)]
@@ -51,8 +54,8 @@ impl App {
                 Some(View::MainView(ms)) => ms.render()?,
                 Some(View::TaskView(ts)) => ts.render()?,
                 Some(View::EntryView(es)) => es.render()?,
-                Some(View::CreateTaskView(cs)) => cs.render()?,
-                Some(View::CreateTaskEntryView(cs)) => cs.render()?,
+                Some(View::CreateTaskView(cts)) => cts.render()?,
+                Some(View::CreateEntryView(ces)) => ces.render()?,
                 _ => panic!("This is a packrat bug!")
             };
             

@@ -2,7 +2,7 @@ use std::io;
 use tui::layout::Rect;
 use crate::model::store::TaskStore;
 use crate::ui::view::Transition;
-use crate::ui::state::{TaskViewState, MainViewState, CreateViewState};
+use crate::ui::state::{TaskViewState, MainViewState, CreateTaskViewState};
 use crate::ui::widgets::{list_factory, control_widget, map_list_styles};
 use crate::model::task::Task;
 use std::time::Instant;
@@ -88,7 +88,7 @@ impl Renderable for MainViewState {
                         => {
                             Transition::Push(
                                 View::CreateTaskView(
-                                    CreateViewState::new_task(
+                                    CreateTaskViewState::new(
                                         Task::new("New Task", "Task Description")
                                     )
                                 )

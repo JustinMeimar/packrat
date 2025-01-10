@@ -1,40 +1,44 @@
 /// main.rs
-use std::io;
 use packrat::model::task::Task;
 use packrat::model::store::TaskStore;
 use packrat::model::task_entry::TaskEntry;
 use packrat::ui::view;
+use std::{error::Error, io::{self, stdout}};
+
+/// Used to manage 
+use crossterm::{
+    execute,
+    terminal::{enable_raw_mode,disable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    cursor::{Show, Hide},
+};
 
 ///////////////////////////////////////////////////////////
 
-fn add_dummy_tasks() {
+fn main() -> Result<(), Box<dyn Error>> {
     
-    let ts = TaskStore::instance();
+    // enter raw mode
+    enable_raw_mode()?;
 
-    let task1 = ts.put(Task::new("Walk Dog", "Walk buddy around the block")).unwrap();
-    let task2 = ts.put(Task::new("Learn Rust", "Harness crab energy")).unwrap();
-    let task3 = ts.put(Task::new("Meditate", "Just sit down and do nothing!")).unwrap();
-    
-    let entry_1 = ts.put(TaskEntry::new(task1.id, "Today I walked the dog"));
-    let entry_2 = ts.put(TaskEntry::new(task1.id, "Yesterday I walked buddy twice"));
-    let entry_3 = ts.put(TaskEntry::new(task2.id, "I learned about .transpose()"));
-    
-    ts.dump();
-}
-
-fn main() -> Result<(), io::Error>  {
-        
-    // remove previous dummy data
-    TaskStore::instance().truncate();
-    
-    // populate some tasks
-    add_dummy_tasks(); 
- 
-    // move ownership to the app
-    let mut app = view::App::new();
-    
-    // run
+    // switch to alternate screen, hide cursor, etc.
+    execute!(
+        stdout(),
+        EnterAlternateScreen,
+        Hide
+    )?;
+       
+    // run the app
+    let mut app = view::App::new();    
     app.run();
+
+    // disable raw mode before exit
+    disable_raw_mode()?;
+
+    // leave alternate screen, show cursor again
+    execute!(
+        stdout(),
+        LeaveAlternateScreen,
+        Show
+    )?;
 
     Ok(())
 }

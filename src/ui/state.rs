@@ -39,8 +39,15 @@ pub struct EntryViewState {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct CreateViewState<T: Storable> {
-    pub item: T,
+pub struct CreateTaskViewState {
+    pub item: Task,
+    pub inputs: Vec<String>, 
+    pub active_input: usize,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct CreateEntryViewState {
+    pub item: TaskEntry,
     pub inputs: Vec<String>, 
     pub active_input: usize,
 }
@@ -121,9 +128,9 @@ impl EntryViewState {
     }
 }
 
-impl CreateViewState<Task> {
-    pub fn new_task(item: Task) -> Self {
-        CreateViewState {
+impl CreateTaskViewState {
+    pub fn new(item: Task) -> Self {
+        CreateTaskViewState {
             item,
             // TODO: Find a way to encapsulate this within a Task!
             // Perhaps get_default_inputs()
@@ -136,9 +143,9 @@ impl CreateViewState<Task> {
     }
 }
 
-impl CreateViewState<TaskEntry> {
-    pub fn new_task_entry(item: TaskEntry) -> Self {
-        CreateViewState {
+impl CreateEntryViewState {
+    pub fn new(item: TaskEntry) -> Self {
+        CreateEntryViewState {
             item,
             inputs: vec![
                 String::from("Entry Tag"),

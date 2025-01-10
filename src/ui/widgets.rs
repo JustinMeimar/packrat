@@ -35,7 +35,10 @@ where
 
 /// Create a table widget from a vector of vectors. The inner vector represents a row,
 /// by convention the first row is used as the column labels.
-pub fn table_factory<'a, T, K>(grid_items: Vec<Vec<T>>, table_title: K) -> AnyWidget<'a>
+pub fn table_factory<'a, T, K>(
+    grid_items: Vec<Vec<T>>,
+    table_title: K,
+) -> AnyWidget<'a>
 where
     T: Display,
     K: Into<String>,
@@ -64,7 +67,7 @@ where
         Table::new(table_rows)
             .header(Row::new(column_names))
             .block(Block::default().title(table_title.into()).borders(Borders::ALL))
-            .widths(&[Constraint::Min(10); 3]),
+            .widths(&[Constraint::Min(100)])
     )
 }
 
@@ -90,15 +93,22 @@ where
 ///////////////////////////////////////////////////////////
 
 pub fn control_widget<'a>() -> AnyWidget<'a> {
-    let control_items = UserAction::all(); 
-    table_factory(vec![control_items], "Controls")
+    // Collect actions into a Vec<String>
+    let actions: Vec<String> = UserAction::all()
+        .iter()
+        .map(|action| action.to_string())
+        .collect();
+
+    let control_string = actions.join(" | ");
+    let grid_items = vec![vec![control_string]];
+
+    table_factory(grid_items, "Controls")
 }
 
 pub fn map_list_styles<T>(items: &Vec<T>, select_idx: usize) -> Vec<Style>
 where
     T: Storable
-{
-    
+{ 
     items.iter().enumerate().map(|(i, t)| {
         if i == select_idx {
             Style::default()
@@ -109,5 +119,4 @@ where
         }
     }).collect()
 }
-
 

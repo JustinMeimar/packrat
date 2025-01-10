@@ -2,7 +2,7 @@ use std::io;
 use tui::layout::Rect;
 use crate::model::store::TaskStore;
 use crate::ui::view::Transition;
-use crate::ui::state::{TaskViewState, EntryViewState, CreateViewState};
+use crate::ui::state::{TaskViewState, EntryViewState, CreateEntryViewState};
 use crate::ui::widgets::{list_factory, control_widget, map_list_styles};
 use crate::model::task::Task;
 use crate::model::task_entry::TaskEntry;
@@ -74,8 +74,8 @@ impl Renderable for TaskViewState {
                     Event::Key(KeyEvent { code: KeyCode::Char('n'), .. }) 
                         => {
                             Transition::Push(
-                                View::CreateTaskEntryView(
-                                    CreateViewState::new_task_entry(
+                                View::CreateEntryView(
+                                    CreateEntryViewState::new(
                                         TaskEntry::new(
                                             self.task.id, 
                                             "Task Description"
