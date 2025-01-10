@@ -74,9 +74,12 @@ impl Renderable for TaskViewState {
                     Event::Key(KeyEvent { code: KeyCode::Char('n'), .. }) 
                         => {
                             Transition::Push(
-                                View::CreateView(
-                                    CreateViewState::new(
-                                        Task::new("New Task", "Task Description")
+                                View::CreateTaskEntryView(
+                                    CreateViewState::new_task_entry(
+                                        TaskEntry::new(
+                                            self.task.id, 
+                                            "Task Description"
+                                        )
                                     )
                                 )
                             )

@@ -1,6 +1,7 @@
 /// view.rs
 
 use std::io;
+use crate::model::task_entry::TaskEntry;
 use crate::ui::state::{EntryViewState, MainViewState, TaskViewState, CreateViewState};
 use crate::ui::render::renderable::Renderable;
 use crate::model::task::Task;
@@ -12,7 +13,8 @@ pub enum View {
     MainView(MainViewState),
     TaskView(TaskViewState),
     EntryView(EntryViewState),
-    CreateView(CreateViewState<Task>),
+    CreateTaskView(CreateViewState<Task>),
+    CreateTaskEntryView(CreateViewState<TaskEntry>),
 }
 
 #[derive(Debug, PartialEq)]
@@ -49,7 +51,8 @@ impl App {
                 Some(View::MainView(ms)) => ms.render()?,
                 Some(View::TaskView(ts)) => ts.render()?,
                 Some(View::EntryView(es)) => es.render()?,
-                Some(View::CreateView(cs)) => cs.render()?,
+                Some(View::CreateTaskView(cs)) => cs.render()?,
+                Some(View::CreateTaskEntryView(cs)) => cs.render()?,
                 _ => panic!("This is a packrat bug!")
             };
             

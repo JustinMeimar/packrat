@@ -122,7 +122,7 @@ impl EntryViewState {
 }
 
 impl CreateViewState<Task> {
-    pub fn new(item: Task) -> Self {
+    pub fn new_task(item: Task) -> Self {
         CreateViewState {
             item,
             // TODO: Find a way to encapsulate this within a Task!
@@ -135,3 +135,17 @@ impl CreateViewState<Task> {
         }
     }
 }
+
+impl CreateViewState<TaskEntry> {
+    pub fn new_task_entry(item: TaskEntry) -> Self {
+        CreateViewState {
+            item,
+            inputs: vec![
+                String::from("Entry Tag"),
+                String::from("Entry Date Time")
+            ],
+            active_input: 0
+        }
+    }
+}
+

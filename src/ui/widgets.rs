@@ -4,7 +4,7 @@ use crate::ui::render::renderable::AnyWidget;
 use tui::{ 
     layout::Constraint,
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListItem, Table, Row, Cell},
+    widgets::{Block, Borders, List, ListItem, Table, Row, Cell, Paragraph},
 };
 
 
@@ -65,6 +65,25 @@ where
             .header(Row::new(column_names))
             .block(Block::default().title(table_title.into()).borders(Borders::ALL))
             .widths(&[Constraint::Min(10); 3]),
+    )
+}
+
+pub fn paragraph_factory<'a, T>(title: T, init_text: T, highlight: bool) -> AnyWidget<'a>
+where
+    T: Into<String>
+{
+    AnyWidget::Paragraph(
+        Paragraph::new(init_text.into())
+            .block(
+                Block::default()
+                    .title(title.into())
+                    .borders(Borders::ALL)
+                    .style(if highlight {
+                        Style::default().fg(Color::Yellow)
+                    } else {
+                        Style::default()
+                    }),
+            )
     )
 }
 

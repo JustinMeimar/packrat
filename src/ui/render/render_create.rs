@@ -1,25 +1,61 @@
 use std::io;
-use crate::model::convert::Storable;
+use crate::model::{convert::Storable, task_entry::TaskEntry, task::Task};
+use crate::model::store::TaskStore;
 use crate::ui::view::Transition;
 use crate::ui::state::CreateViewState;
 use crate::ui::control::Controlable;
 use tui::{ 
     backend::Backend,
-    layout::{Constraint, Direction, Layout},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     widgets::{Block, Borders, Paragraph},
 };
 use crate::ui::render::renderable::{
-    Renderable,
+    Renderable, AnyWidget,
     render_view_startup, render_view_teardown
 };
+use crate::ui::widgets::paragraph_factory;
+use crossterm::event::{self, Event, KeyCode, KeyEvent};
 
 ///////////////////////////////////////////////////////////
 
-impl<T: Storable> Renderable for CreateViewState<T> {
+pub trait FormController {
+    fn ctrl(&mut self, inputs: &mut Vec<String>, active_input: &mut usize) -> Transition;
+}
 
-    /// TODO: This implementation is fully rolled out for first iteration, needs
-    /// to be factored into the widget library
+impl<T: Storable + FormController> Renderable for CreateViewState<T> {
+
+    ///
+    fn chunks(&self, frame: Rect) -> Vec<Rect> {
+        
+        let modal_width = frame.width / 3 * 2;
+        let modal_height = 10; 
+        let modal_area = tui::layout::Rect::new(
+                    (frame.width - modal_width) / 2,
+                    (frame.height - modal_height) / 2,
+                    modal_width,
+                    modal_height,
+                );
+
+        Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(modal_area)    
+    }
+
+
+    fn widgets(&mut self) -> io::Result<Vec<AnyWidget>> {
+        
+        let title_widget = paragraph_factory(
+            "Task Name", self.inputs[0].as_str(), (self.active_input == 0));
+        
+        let desc_widget = paragraph_factory(
+            " Task Descripion", self.inputs[1].as_str(), (self.active_input == 1));
+        
+        Ok(vec![title_widget, desc_widget])
+    }
+
+    /// Render a dialgoue box overtop of the current view, taking the user input.
     fn render(&mut self) -> io::Result<Transition> {
         
         let mut terminal = render_view_startup()?;
@@ -27,60 +63,19 @@ impl<T: Storable> Renderable for CreateViewState<T> {
 
         let result = loop {
             terminal.draw(|f| {
-                let size = f.size();
-                let modal_width = size.width / 3 * 2;
-                let modal_height = 10;
-
-                let modal_area = tui::layout::Rect::new(
-                    (size.width - modal_width) / 2,
-                    (size.height - modal_height) / 2,
-                    modal_width,
-                    modal_height,
-                );
                 
-                let chunks = Layout::default()
-                    .direction(Direction::Vertical)
-                    .constraints([
-                        Constraint::Percentage(50),
-                        Constraint::Percentage(50),
-                    ])
-                    .split(modal_area);
-
-                let modal_block = Block::default()
-                    .title("Create New Task")
-                    .borders(Borders::ALL)
-                    .style(Style::default().fg(Color::Gray));
-                f.render_widget(modal_block, modal_area);
-
-                let title_widget = Paragraph::new(self.inputs[0].as_str())
-                    .block(
-                        Block::default()
-                            .title("Task Title")
-                            .borders(Borders::ALL)
-                            .style(if self.active_input == 0 {
-                                Style::default().fg(Color::Yellow)
-                            } else {
-                                Style::default()
-                            }),
-                    );
-
-                let desc_widget = Paragraph::new(self.inputs[1].as_str())
-                    .block(
-                        Block::default()
-                            .title("Task Description")
-                            .borders(Borders::ALL)
-                            .style(if self.active_input == 1 {
-                                Style::default().fg(Color::Yellow)
-                            } else {
-                                Style::default()
-                            }),
-                    );
-
-                f.render_widget(title_widget, chunks[0]);
-                f.render_widget(desc_widget, chunks[1]);
+                let chunks: Vec<Rect> = self.chunks(f.size()); 
+                let widgets = self.widgets().unwrap();
+                
+                widgets.into_iter().enumerate().for_each(|(i, w)| {
+                    f.render_widget(w, chunks[i]);
+                });
+ 
             })?;
+           
+            transition = T::ctrl(
+                &mut self.item, &mut self.inputs, &mut self.active_input);
             
-            transition = self.control();
             match transition {
                 Transition::Stay => continue,
                 _ => break
@@ -90,6 +85,60 @@ impl<T: Storable> Renderable for CreateViewState<T> {
         // Ensure the terminal is properly torn down before returning
         render_view_teardown(&mut terminal)?;
         Ok(transition)
+    }    
+}
+
+impl FormController for Task {
+    fn ctrl(&mut self, inputs: &mut Vec<String>, active_input: &mut usize) -> Transition {
+        match event::read().unwrap() {
+            Event::Key(KeyEvent { code: KeyCode::Esc, .. }) => Transition::Pop,
+            Event::Key(KeyEvent { code: KeyCode::Char(c), .. }) => {
+                inputs[*active_input].push(c);
+                Transition::Stay
+            }
+            Event::Key(KeyEvent { code: KeyCode::Backspace, .. }) => {
+                inputs[*active_input].pop();
+                Transition::Stay
+            }
+            Event::Key(KeyEvent { code: KeyCode::Tab, .. }) => {
+                let n_input = inputs.len();
+                *active_input = (*active_input + n_input + 1) % n_input;
+                Transition::Stay
+            }
+            Event::Key(KeyEvent { code: KeyCode::Enter, .. }) => {
+                TaskStore::instance().put(Task::new(inputs[0].clone(), inputs[1].clone()));
+                Transition::Pop
+            }
+            _ => Transition::Stay,
+        }
+    }
+}
+
+impl FormController for TaskEntry {
+    fn ctrl(&mut self, inputs: &mut Vec<String>, active_input: &mut usize) -> Transition {
+        match event::read().unwrap() {
+            Event::Key(KeyEvent { code: KeyCode::Esc, .. }) => Transition::Pop,
+            Event::Key(KeyEvent { code: KeyCode::Char(c), .. }) => {
+                inputs[*active_input].push(c);
+                Transition::Stay
+            }
+            Event::Key(KeyEvent { code: KeyCode::Backspace, .. }) => {
+                inputs[*active_input].pop();
+                Transition::Stay
+            }
+            Event::Key(KeyEvent { code: KeyCode::Tab, .. }) => {
+                let n_input = inputs.len();
+                *active_input = (*active_input + n_input + 1) % n_input;
+                Transition::Stay
+            }
+            Event::Key(KeyEvent { code: KeyCode::Enter, .. }) => {
+                TaskStore::instance().put(TaskEntry::new(
+                        self.task_id.clone(), inputs[1].clone()
+                    ));
+                Transition::Pop
+            }
+            _ => Transition::Stay,
+        }
     }
 }
 

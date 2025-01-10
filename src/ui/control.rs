@@ -65,7 +65,7 @@ impl<T: Storable> Controlable for CreateViewState<T> {
 
         match event::read().unwrap() {  
     
-            Event::Key(KeyEvent { code: KeyCode::Char('b') | KeyCode::Char('q'), .. })
+            Event::Key(KeyEvent { code: KeyCode::Esc, .. })
                 => Transition::Pop,
 
             Event::Key(KeyEvent {code: KeyCode::Char(c), .. })

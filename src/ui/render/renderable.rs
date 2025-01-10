@@ -2,6 +2,7 @@ use std::io;
 use std::io::{Stdout, Write, Read};
 use crossterm::execute;
 use tui::layout::Rect;
+use tui::widgets::Paragraph;
 use crate::ui::view::Transition;
 use crate::ui::state::SelectionState;
 use tui::buffer::Buffer;
@@ -24,6 +25,7 @@ pub type TerminalTy = Terminal<CrosstermBackend<Stdout>>;
 pub enum AnyWidget<'a> {
     List(List<'a>),
     Table(Table<'a>),
+    Paragraph(Paragraph<'a>),
 }
 
 pub enum ControlOption {
@@ -37,6 +39,7 @@ impl<'a> Widget for AnyWidget<'a> {
         match self {
             AnyWidget::List(list) => list.render(area, buf),
             AnyWidget::Table(table) => table.render(area, buf),
+            AnyWidget::Paragraph(para) => para.render(area, buf),
         }
     }
 }

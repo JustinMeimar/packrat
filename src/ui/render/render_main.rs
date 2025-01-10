@@ -18,14 +18,14 @@ use crate::ui::render::renderable::{
 
 impl Renderable for MainViewState {
        
-    // Create the chunks that widgets will render ontop of 
+    /// Create the chunks that widgets will render ontop of 
     fn chunks(&self, frame: Rect) -> Vec<Rect> {        
         Layout::default()
             .constraints([Constraint::Length(3),Constraint::Max(50)].as_ref())
             .split(frame)
     }
     
-    // Render the main view controls and the list of tasks
+    /// Render the main view controls and the list of tasks
     fn widgets(&mut self) -> io::Result<Vec<AnyWidget>> {
                   
         let task_items: Vec<Task> = TaskStore::instance().get_prefix(Task::key_all()).unwrap(); 
@@ -54,9 +54,12 @@ impl Renderable for MainViewState {
         self.selector.max_idx = self.items.len();
     }
     
-    // Draw the View on the terminal
-    fn render(&mut self) -> io::Result<Transition> { return render_view(self, Self::controler); } 
-
+    /// Draw the View on the terminal
+    fn render(&mut self) -> io::Result<Transition> {
+        return render_view(self, Self::controler);
+    } 
+    
+    /// Handle the user inputs
     fn controler(&mut self) -> Transition {
 
         match default_controls(&mut self.selector) {
@@ -70,21 +73,22 @@ impl Renderable for MainViewState {
                     /// What to do on "edit"
                     Event::Key(KeyEvent { code: KeyCode::Char('e'), .. }) 
                         => {
-                            let item = self.items[self.selector.idx].clone();
-                            Transition::Push(
-                                View::CreateView(
-                                    CreateViewState::new(
-                                        item.clone()
-                                    )
-                                )
-                            )
+                            Transition::Stay
+                            // let item: Task = self.items[self.selector.idx].clone();
+                            // Transition::Push(
+                            //     View::CreateView(
+                            //         CreateViewState::new(
+                            //             item.clone()
+                            //         )
+                            //     )
+                            // )
                         } 
                     /// What to do on "new"
                     Event::Key(KeyEvent { code: KeyCode::Char('n'), .. }) 
                         => {
                             Transition::Push(
-                                View::CreateView(
-                                    CreateViewState::new(
+                                View::CreateTaskView(
+                                    CreateViewState::new_task(
                                         Task::new("New Task", "Task Description")
                                     )
                                 )
@@ -106,3 +110,4 @@ impl Renderable for MainViewState {
         }
     }
 }
+
