@@ -55,7 +55,7 @@ impl App {
                 Some(View::TaskView(ts)) => ts.render()?,
                 Some(View::EntryView(es)) => es.render()?,
                 Some(View::CreateTaskView(cts)) => cts.render()?,
-                Some(View::CreateEntryView(ces)) => ces.render()?,
+                // Some(View::CreateEntryView(ces)) => ces.render()?,
                 _ => panic!("This is a packrat bug!")
             };
             

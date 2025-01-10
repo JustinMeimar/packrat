@@ -118,10 +118,12 @@ where
 
         let transition = control_handler(state);
         if transition != Transition::Stay {
+            terminal.clear()?;
             return Ok(transition);
         }
     };
-
+    
+    terminal.clear()?;
     render_view_teardown(&mut terminal);
     
     Ok(transition)

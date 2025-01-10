@@ -36,24 +36,7 @@ impl Renderable for TaskViewState {
            
         let task_items: Vec<TaskEntry> = TaskStore::instance()
             .get_prefix(TaskEntry::key_task(self.task.id))
-            .unwrap(); 
-        
-        let entries: Vec<TaskEntry> = TaskStore::instance()
-            .get_prefix(TaskEntry::key_task(self.task.id))
-            .unwrap();
-
-
-        let all_entries: Vec<TaskEntry> = TaskStore::instance().get_prefix(TaskEntry::key_all()).unwrap();
-    
-        // let entries = self.task.get_entries();
-
-        debug_log(&format!("{:?}", self.task.id));
-        debug_log(&format!("{:?}",
-                TaskStore::instance()
-                    .get::<Task>(Task::key_task(self.task.id))
-                    .unwrap()));
-
-        debug_log(&format!("{:?}", entries));
+            .unwrap();  
          
         let task_styles = map_list_styles(&task_items, self.selector.idx); 
         let task_widget = list_factory(task_items, task_styles, self.task.name.clone());
@@ -97,7 +80,7 @@ impl Renderable for TaskViewState {
                             TaskStore::instance().put(
                                 TaskEntry::new(self.task.id, "")
                             );
-                            Transition::Stay 
+                            Transition::Stay
                         } 
                     // What to do on "select"
                     Event::Key(KeyEvent { code: KeyCode::Char('s') | KeyCode::Enter, .. })
