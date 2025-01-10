@@ -33,15 +33,6 @@ impl Renderable for MainViewState {
             .unwrap();
             
         let task_widget = task_table(task_items, self.selector.idx);
-        // let task_styles = map_list_styles(&task_items, self.selector.idx);
-        // 
-        // let task_grid: Vec<Vec<String>> = task_items
-        //     .iter()
-        //     .map(|t| vec![t.id.to_string(), t.name.clone()])
-        //     .collect();
-        //
-        // let task_widget = list_factory(task_items, task_styles, "Tasks");
-        // let task_widget = table_factory(task_grid, "Tasks");
         
         Ok(vec![control_widget(), task_widget])
     } 

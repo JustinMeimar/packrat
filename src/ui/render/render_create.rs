@@ -191,9 +191,7 @@ impl FormRenderable for CreateEntryViewState {
                 Transition::Stay
             }
             Event::Key(KeyEvent { code: KeyCode::Enter, .. }) => {
-                TaskStore::instance().put(TaskEntry::new(
-                        self.item.id, vec![] 
-                    ));
+                TaskStore::instance().put(self.item.clone());
                 Transition::Pop
             }
             _ => Transition::Stay,

@@ -132,8 +132,6 @@ impl CreateTaskViewState {
     pub fn new(item: Task) -> Self {
         CreateTaskViewState {
             item,
-            // TODO: Find a way to encapsulate this within a Task!
-            // Perhaps get_default_inputs()
             inputs: vec![
                 String::from("Task Title"),
                 String::from("Task Description")

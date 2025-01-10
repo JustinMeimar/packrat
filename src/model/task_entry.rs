@@ -38,9 +38,6 @@ impl TaskEntry {
     pub fn key_task_entry<S: Into<String> + Display>(task_id: S, entry_id: S) -> String {
         format!("task_entry:{}:{}", task_id, entry_id)
     }
-
-    /// stateful key identity
-    pub fn key_get(&self) -> String { format!("task_entry:{}:{}", self.id, self.task_id) }
 }
 
 impl Display for TaskEntry {

@@ -39,7 +39,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         LeaveAlternateScreen,
         Show
     )?;
-
+        
+    TaskStore::instance().dump();
     Ok(())
 }
 

@@ -14,7 +14,7 @@ use crate::ui::render::renderable::{
     Renderable, ControlOption, AnyWidget,
     render_view, default_controls 
 };
-
+use crate::log::debug_log;
 ///////////////////////////////////////////////////////////
 
 impl Renderable for TaskViewState {
@@ -37,10 +37,27 @@ impl Renderable for TaskViewState {
         let task_items: Vec<TaskEntry> = TaskStore::instance()
             .get_prefix(TaskEntry::key_task(self.task.id))
             .unwrap(); 
-
-        let task_styles = map_list_styles(&task_items, self.selector.idx); 
-        let task_widget = list_factory(task_items, task_styles, "Tasks");
         
+        let entries: Vec<TaskEntry> = TaskStore::instance()
+            .get_prefix(TaskEntry::key_task(self.task.id))
+            .unwrap();
+
+
+        let all_entries: Vec<TaskEntry> = TaskStore::instance().get_prefix(TaskEntry::key_all()).unwrap();
+    
+        // let entries = self.task.get_entries();
+
+        debug_log(&format!("{:?}", self.task.id));
+        debug_log(&format!("{:?}",
+                TaskStore::instance()
+                    .get::<Task>(Task::key_task(self.task.id))
+                    .unwrap()));
+
+        debug_log(&format!("{:?}", entries));
+         
+        let task_styles = map_list_styles(&task_items, self.selector.idx); 
+        let task_widget = list_factory(task_items, task_styles, self.task.name.clone());
+         
         Ok(vec![control_widget(), task_widget])
     } 
 
@@ -70,21 +87,19 @@ impl Renderable for TaskViewState {
             // A custom case occurred
             ControlOption::E(e) => { 
                 match e {  
-                    /// What to do on "new"
+                    // What to do on "new"
                     Event::Key(KeyEvent { code: KeyCode::Char('n'), .. }) 
                         => {
-                            Transition::Push(
-                                View::CreateEntryView(
-                                    CreateEntryViewState::new(
-                                        TaskEntry::new(
-                                            self.task.id, 
-                                            "Task Description"
-                                        )
-                                    )
-                                )
-                            )
+                            debug_log(&format!("task id: {}", self.task.id)); 
+                            // TODO: Decide if we want to create a dialogue box
+                            // for new entries, or automatically creating one is sufficient.
+                            // For now, just create a entry directly 
+                            TaskStore::instance().put(
+                                TaskEntry::new(self.task.id, "")
+                            );
+                            Transition::Stay 
                         } 
-                    /// What to do on "select"
+                    // What to do on "select"
                     Event::Key(KeyEvent { code: KeyCode::Char('s') | KeyCode::Enter, .. })
                         => {
                             let item = self.items[self.selector.idx].clone();

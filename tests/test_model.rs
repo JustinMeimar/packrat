@@ -66,6 +66,28 @@ fn test_store_put() {
 }
 
 #[test]
+fn test_task_entry() {
+    
+    let ts = get_empty_db(); 
+    let task1 = ts.put(Task::new("Walk Dog", "Walk buddy around the block")).unwrap();
+    let task2 = ts.put(Task::new("Learn Rust", "Harness crab energy")).unwrap();
+
+    let entry_1_1 = ts.put(TaskEntry::new(task1.id, "1 Today I walked the dog"));
+    let entry_1_2 = ts.put(TaskEntry::new(task1.id, "1 Yesterday I walked buddy twice"));
+    let entry_2_1 = ts.put(TaskEntry::new(task2.id, "2 Today I walked the dog"));
+    let entry_2_2 = ts.put(TaskEntry::new(task2.id, "2 Yesterday I walked buddy twice"));
+    
+    // let entries = task1.get_entries();
+    let entries: Vec<TaskEntry> = ts
+            .get_prefix(TaskEntry::key_task(task1.id))
+            .unwrap();
+ 
+    assert_eq!(entries.len(), 2);
+
+    // assert_eq!(entries.sort_by(|a, b| a.name ))
+}
+
+#[test]
 fn test_task_manager() {
    
     let ts = get_empty_db();

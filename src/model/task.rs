@@ -5,7 +5,9 @@ use chrono::{Local, NaiveDate};
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 use std::fmt::Display;
-use crate::model::convert::Storable; 
+use crate::model::convert::Storable;
+
+use super::{store::TaskStore, task_entry::TaskEntry}; 
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone)]
 pub struct Task {
@@ -25,7 +27,14 @@ impl Task {
             created_date: Local::today().naive_local(),
         }
     }
-   
+    
+    /// get all the entries for a task
+    pub fn get_entries(&self) -> Vec<TaskEntry> {
+        TaskStore::instance()
+            .get_prefix(TaskEntry::key_task(self.id))
+            .unwrap()
+    }
+
     /// stateless key pattern for retrieving all task entries
     pub fn key_all() -> &'static str {
         "task:"
