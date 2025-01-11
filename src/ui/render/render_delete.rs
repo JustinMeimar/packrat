@@ -37,8 +37,7 @@ impl<T: Display + Storable> Renderable for DeleteViewState<T> {
                             .borders(Borders::ALL)
                     )
                     .style(
-                        Style::default()
-
+                        Style::default().fg(Color::Yellow)
                     )
             )]
         )

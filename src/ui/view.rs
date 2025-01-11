@@ -58,7 +58,6 @@ impl App {
                 Some(View::EntryView(es))       => es.render()?,
                 Some(View::CreateTaskView(cs))  => cs.render()?,
                 Some(View::DeleteView(ds))      => ds.render()?,
-                // Some(View::CreateEntryView(ces)) => ces.render()?,
                 
                 _ => panic!("This is a packrat bug!")
             };

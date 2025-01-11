@@ -3,7 +3,7 @@ use std::io::{Stdout, Write, Read};
 use crossterm::execute;
 use tui::layout::Rect;
 use tui::widgets::Paragraph;
-use crate::ui::view::Transition;
+use crate::ui::view::{Transition, View};
 use crate::ui::state::SelectionState;
 use tui::buffer::Buffer;
 use tui::{ 
@@ -119,16 +119,22 @@ where
             });
         })?;
 
+        /// For some views, like dialogue boxes that should appear "layered",
+        /// we don't want to clear the screen below. Same for Stay transitions,
+        /// since doing so induces a flicker.
         let transition = control_handler(state);
-            
-        if transition != Transition::Stay {
-            
-            // if let Transition::Push(v) = transition {
-            // } else {}
-            //
-            terminal.clear()?;
-            return Ok(transition);
-        }
+        match transition {
+            Transition::Stay => {
+                return Ok(transition);
+            }
+            Transition::Push(View::DeleteView(_)) | Transition::Push(View::CreateTaskView(_)) => {
+                return Ok(transition);
+            }
+            _ => {
+                terminal.clear()?;
+                return Ok(transition);
+            }
+        } 
     };
     
     terminal.clear()?;
