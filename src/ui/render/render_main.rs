@@ -3,7 +3,7 @@ use tui::layout::Rect;
 use crate::model::store::TaskStore;
 use crate::ui::view::Transition;
 use crate::ui::state::{CreateTaskViewState, DeleteViewState, MainViewState, TaskViewState};
-use crate::ui::widgets::{list_factory, control_widget, map_list_styles, item_table};
+use crate::ui::widgets::{control_widget, item_table};
 use crate::model::task::Task;
 use std::time::Instant;
 use tui::layout::{Constraint, Layout};

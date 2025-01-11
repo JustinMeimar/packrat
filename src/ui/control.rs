@@ -2,10 +2,7 @@
 
 use std::fmt;
 use std::collections::HashMap;
-use crossterm::event::{self, Event, KeyCode, KeyEvent};
-use crate::model::convert::Storable;
-use crate::model::task::Task;
-use crate::model::store::TaskStore;
+use crossterm::event::{KeyCode};
 use crate::ui::view::Transition;
 
 ///////////////////////////////////////////////////////////

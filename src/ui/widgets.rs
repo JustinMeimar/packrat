@@ -1,8 +1,6 @@
 use crate::{model::convert::Storable, ui::control::UserAction};
 use std::fmt::Display;
 use crate::ui::render::renderable::AnyWidget;
-use crate::model::task::Task;
-use crossterm::terminal::ScrollDown;
 use tui::{ 
     layout::Constraint,
     style::{Color, Modifier, Style},

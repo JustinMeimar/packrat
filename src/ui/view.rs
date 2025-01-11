@@ -1,7 +1,6 @@
 /// view.rs
 
 use std::io;
-use crate::model::task_entry::TaskEntry;
 use crate::ui::state::*;
 use crate::ui::render::renderable::Renderable;
 use crate::ui::render::render_create::FormRenderable;
@@ -18,7 +17,6 @@ pub enum View {
     DeleteView(DeleteViewState<Task>),      // delete a task 
     EditView(EditViewState<Task>),          // edit a task
     CreateTaskView(CreateTaskViewState),    // form for new Task
-    CreateEntryView(CreateEntryViewState),  // form for new TaskEntry
 }
 
 #[derive(Debug, PartialEq)]

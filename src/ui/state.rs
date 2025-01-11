@@ -47,13 +47,6 @@ pub struct CreateTaskViewState {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct CreateEntryViewState {
-    pub item: TaskEntry,
-    pub inputs: Vec<String>, 
-    pub active_input: usize,
-}
-
-#[derive(Debug, PartialEq)]
 pub struct DeleteViewState<T> {
     pub delete_item: T,
 }
@@ -152,19 +145,6 @@ impl CreateTaskViewState {
             inputs, 
             active_input: 0,
             is_edit,
-        }
-    }
-}
-
-impl CreateEntryViewState {
-    pub fn new(item: TaskEntry) -> Self {
-        CreateEntryViewState {
-            item,
-            inputs: vec![
-                String::from(""),
-                String::from("")
-            ],
-            active_input: 0
         }
     }
 }

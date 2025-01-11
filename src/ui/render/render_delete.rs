@@ -1,22 +1,16 @@
 use std::io;
-use crate::log::debug_log;
-use crate::model::{convert::Storable, task_entry::TaskEntry, task::Task};
+use crate::model::convert::Storable;
 use crate::model::store::TaskStore;
 use crate::ui::view::Transition;
 use crate::ui::state::DeleteViewState;
-use crate::ui::render::render_create::FormRenderable;
-use crate::ui::control::Controlable;
 use tui::{ 
-    backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     widgets::{Block, Borders, Paragraph},
 };
 use crate::ui::render::renderable::{
-    Renderable, AnyWidget, render_view,
-    render_view_startup, render_view_teardown
+    Renderable, AnyWidget, render_view
 };
-use crate::ui::widgets::paragraph_factory;
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
 use std::fmt::Display;
 

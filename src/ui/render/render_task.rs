@@ -1,11 +1,9 @@
 use std::io;
 use tui::layout::Rect;
-use crate::model::convert::Storable;
 use crate::model::store::TaskStore;
 use crate::ui::view::Transition;
-use crate::ui::state::{TaskViewState, EntryViewState, CreateEntryViewState};
-use crate::ui::widgets::{list_factory, control_widget, map_list_styles, item_table};
-use crate::model::task::Task;
+use crate::ui::state::{TaskViewState, EntryViewState};
+use crate::ui::widgets::{control_widget, item_table};
 use crate::model::task_entry::TaskEntry;
 use std::time::Instant;
 use tui::layout::{Constraint, Layout};

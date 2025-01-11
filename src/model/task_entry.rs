@@ -3,7 +3,7 @@ use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
 use std::fmt::Display;
-use crate::{log::debug_log, model::convert::Storable};
+use crate::model::convert::Storable;
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone)]
 pub struct TaskEntry {

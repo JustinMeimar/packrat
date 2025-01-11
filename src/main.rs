@@ -1,9 +1,6 @@
-/// main.rs
-use packrat::model::task::Task;
 use packrat::model::store::TaskStore;
-use packrat::model::task_entry::TaskEntry;
 use packrat::ui::view;
-use std::{error::Error, io::{self, stdout}};
+use std::{error::Error, io::{stdout}};
 
 /// Used to manage 
 use crossterm::{
