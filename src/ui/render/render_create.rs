@@ -1,3 +1,6 @@
+/// render_create.rs
+/// TODO: Factor these Task and Entry implementations into one, generic version.
+
 use std::io;
 use crate::model::{convert::Storable, task_entry::TaskEntry, task::Task};
 use crate::model::store::TaskStore;
@@ -54,7 +57,6 @@ pub trait FormRenderable {
 
     /// Must implement!
     fn widgets(&mut self) -> io::Result<Vec<AnyWidget>>;
-
 }
 
 impl FormRenderable for CreateTaskViewState {
@@ -118,11 +120,25 @@ impl FormRenderable for CreateTaskViewState {
                 Transition::Stay
             }
             Event::Key(KeyEvent { code: KeyCode::Enter, .. }) => {
-                TaskStore::instance().put(
-                    Task::new(
-                        self.inputs[0].clone(),
-                        self.inputs[1].clone())
+                
+                /// Clone city, this is not great Rust... but works for now  
+                if self.is_edit {
+
+                    self.item.name = self.inputs[0].clone();
+                    self.item.desc = self.inputs[1].clone();
+
+                    TaskStore::instance().put(self.item.clone());
+
+                } else {
+                    /// Create a new task
+                    TaskStore::instance().put(
+                        Task::new(
+                            self.inputs[0].clone(),
+                            self.inputs[1].clone()
+                        )
                     );
+                }
+                
                 Transition::Pop
             }
             _ => Transition::Stay,

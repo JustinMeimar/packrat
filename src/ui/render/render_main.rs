@@ -94,23 +94,22 @@ impl Renderable for MainViewState {
                         }                    /// What to do on "edit"
                     Event::Key(KeyEvent { code: KeyCode::Char('e'), .. }) 
                         => {
-                            Transition::Stay
-                            // let item: Task = self.items[self.selector.idx].clone();
-                            // Transition::Push(
-                            //     View::CreateView(
-                            //         CreateViewState::new(
-                            //             item.clone()
-                            //         )
-                            //     )
-                            // )
-                        } 
+                            let item = self.items[self.selector.idx].clone();
+                            Transition::Push(
+                                View::CreateTaskView(
+                                    CreateTaskViewState::new(item, true)
+                                )
+                            )
+                        }  
+ 
                     /// What to do on "new"
                     Event::Key(KeyEvent { code: KeyCode::Char('n'), .. }) 
                         => {
                             Transition::Push(
                                 View::CreateTaskView(
                                     CreateTaskViewState::new(
-                                        Task::new("New Task", "Task Description")
+                                        Task::new("New Task", "Task Description"),
+                                        false
                                     )
                                 )
                             )

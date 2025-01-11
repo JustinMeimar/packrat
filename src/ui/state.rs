@@ -43,6 +43,7 @@ pub struct CreateTaskViewState {
     pub item: Task,
     pub inputs: Vec<String>, 
     pub active_input: usize,
+    pub is_edit: bool,
 }
 
 #[derive(Debug, PartialEq)]
@@ -143,14 +144,14 @@ impl EntryViewState {
 }
 
 impl CreateTaskViewState {
-    pub fn new(item: Task) -> Self {
+    pub fn new(item: Task, is_edit: bool) -> Self {
+        
+        let inputs = vec![item.name.clone(), item.desc.clone()];
         CreateTaskViewState {
             item,
-            inputs: vec![
-                String::from(""),
-                String::from("")
-            ],
-            active_input: 0
+            inputs, 
+            active_input: 0,
+            is_edit,
         }
     }
 }
