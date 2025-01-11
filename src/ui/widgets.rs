@@ -2,10 +2,11 @@ use crate::{model::convert::Storable, ui::control::UserAction};
 use std::fmt::Display;
 use crate::ui::render::renderable::AnyWidget;
 use crate::model::task::Task;
+use crossterm::terminal::ScrollDown;
 use tui::{ 
     layout::Constraint,
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListItem, Table, Row, Cell, Paragraph},
+    widgets::{Block, Borders, List, ListItem, Table, Row, Cell, Paragraph, Wrap},
 };
 
 
@@ -48,8 +49,9 @@ where
                         Style::default().fg(Color::Yellow)
                     } else {
                         Style::default()
-                    }),
+                    }), 
             )
+            .wrap(Wrap {trim: false})
     )
 }
 

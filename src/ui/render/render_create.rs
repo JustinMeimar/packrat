@@ -37,7 +37,7 @@ pub trait FormRenderable {
 
         Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
             .split(modal_area)
     } 
     
@@ -56,7 +56,6 @@ pub trait FormRenderable {
     fn widgets(&mut self) -> io::Result<Vec<AnyWidget>>;
 
 }
-
 
 impl FormRenderable for CreateTaskViewState {
     

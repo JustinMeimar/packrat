@@ -147,8 +147,8 @@ impl CreateTaskViewState {
         CreateTaskViewState {
             item,
             inputs: vec![
-                String::from("Task Title"),
-                String::from("Task Description")
+                String::from(""),
+                String::from("")
             ],
             active_input: 0
         }
@@ -160,8 +160,8 @@ impl CreateEntryViewState {
         CreateEntryViewState {
             item,
             inputs: vec![
-                String::from("Entry Tag"),
-                String::from("Entry Date Time")
+                String::from(""),
+                String::from("")
             ],
             active_input: 0
         }

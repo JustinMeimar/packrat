@@ -20,9 +20,9 @@ use crate::ui::render::renderable::{
 /// only TUI api
 static COLUMN_HEADERS: [&str; 3] = ["Habit", "Created", "Description"];
 static CONSTRAINTS: [Constraint; 3] = [
-    Constraint::Percentage(33),
-    Constraint::Percentage(33),
-    Constraint::Percentage(33),
+    Constraint::Percentage(25),
+    Constraint::Percentage(25),
+    Constraint::Percentage(50),
 ];
 
 ///////////////////////////////////////////////////////////
