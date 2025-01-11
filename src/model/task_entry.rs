@@ -3,7 +3,7 @@ use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
 use std::fmt::Display;
-use crate::model::convert::Storable;
+use crate::{log::debug_log, model::convert::Storable};
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone)]
 pub struct TaskEntry {
@@ -43,21 +43,33 @@ impl TaskEntry {
 impl Display for TaskEntry {
     
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-
-        let slice_size = std::cmp::min(self.content.len(), 30);
-        let content_slice = &self.content[0..slice_size];
-
         write!(f, "• {}\t{}...",
             self.timestamp.format("%Y-%m-%d %H:%M:%S"),
-            String::from_utf8_lossy(&content_slice)
+            String::from_utf8_lossy(&self.content)
         ) 
     } 
 }
 
 impl Storable for TaskEntry {
+ 
+    /// get a vector of fields that are for display     
+    fn get_display_fields(&self) -> Vec<String> { 
+        let content = String::from_utf8_lossy(&self.content).to_string() + "...";  
+        vec![self.get_timestamp(), content]
+    }
+
+    /// datetime object was created
+    fn get_timestamp(&self) -> String {
+        format!("{}",
+            self.timestamp.format("%Y-%m-%d %H:%M:%S"),
+        )
+    }
+    
+    /// fill a KV lookup key
     fn to_key(&self) -> String {
         format!("task_entry:{}:{}", self.task_id, self.id)
     }
+
     /// deserialize object from datastore representation
     fn from_bytes(bytes: &[u8]) -> serde_json::Result<Self> {
         serde_json::from_slice(bytes)

@@ -111,10 +111,14 @@ impl MainViewState {
 impl TaskViewState {
     pub fn new(task: Task) -> Self {
 
-        let task_entries = TaskStore::instance()
+        let mut task_entries: Vec<TaskEntry> = TaskStore::instance()
             .get_prefix(TaskEntry::key_task(task.id))
             .unwrap();
         
+        task_entries.sort_by(
+            |a, b| b.get_timestamp().cmp(&a.get_timestamp())
+        );
+
         assert!(task_entries.len() >= 0);
 
         TaskViewState {

@@ -24,7 +24,7 @@ where
     let items: Vec<ListItem> = list_items
         .iter()
         .enumerate()
-        .map(|(i, x)| ListItem::new(format!("{}", x)).style(list_styles[i]))
+        .map(|(i, x)| ListItem::new(format!(" {}", x)).style(list_styles[i]))
         .collect();
  
     AnyWidget::List(
@@ -75,34 +75,82 @@ pub fn control_widget<'a>() -> AnyWidget<'a> {
     AnyWidget::Table(table)
 }
 
-pub fn task_table<'a>(tasks: Vec<Task>, select_idx: usize) -> AnyWidget<'a> {
-    
+// pub fn item_table<'a, T>(
+//     mut tasks: &Vec<T>,
+//     column_headers: Vec<&str>,
+//     constraints: Vec<Constraint>,
+//     select_idx: usize
+// ) -> AnyWidget<'a>
+//
+// where
+//     T: Storable
+// {  
+//     // create and style the rows
+//     let style = Style::default();
+//     let task_rows: Vec<Row> = tasks
+//         .iter()
+//         .enumerate()
+//         .map(|(i, t)| Row::new(t.get_display_fields())
+//             .style(if i == select_idx {
+//                 style.fg(Color::Yellow).add_modifier(Modifier::BOLD)
+//             } else {
+//                 style
+//             }))
+//         .collect();
+//     
+//     let column_labels: Vec<Cell> = column_headers 
+//         .iter()
+//         .map(|s| Cell::from(s.to_string()))
+//         .collect();
+//     
+//     let table = Table::new(task_rows)
+//         .block(Block::default().title("Tasks").borders(Borders::ALL))
+//         .header(Row::new(column_labels))
+//         .widths(&constraints) 
+//         .column_spacing(2);
+//     
+//     AnyWidget::Table(table) 
+// }
+
+pub fn item_table<'a, T>(
+    tasks: &'a [T],
+    column_headers: &'a [&'a str],
+    constraints: &'a [Constraint],
+    select_idx: usize,
+) -> AnyWidget<'a>
+where
+    T: Storable,
+{
     let style = Style::default();
+
     let task_rows: Vec<Row> = tasks
         .iter()
         .enumerate()
-        .map(|(i, t)| Row::new(vec![
-                Cell::from(format!(" • {}", t.name.clone())),
-                Cell::from(format!("{}", t.created_date)),
-                Cell::from(t.desc.clone()),
-        ]).style(if i == select_idx {
-            style.fg(Color::Yellow).add_modifier(Modifier::BOLD)
-        } else {
-            style
-        }))
+        .map(|(i, t)| {
+            Row::new(t.get_display_fields()).style(
+                if i == select_idx {
+                    style.fg(Color::Yellow).add_modifier(Modifier::BOLD)
+                } else {
+                    style
+                },
+            )
+        })
+        .collect();
+
+    let column_labels: Vec<Cell> = column_headers
+        .iter()
+        .map(|s| Cell::from(s.to_string()))
         .collect();
 
     let table = Table::new(task_rows)
         .block(Block::default().title("Tasks").borders(Borders::ALL))
-        .widths(&[
-            Constraint::Percentage(30),
-            Constraint::Percentage(30),
-            Constraint::Percentage(40),
-        ])
+        .header(Row::new(column_labels))
+        .widths(constraints) // references constraints up in the caller
         .column_spacing(2);
-    
-    AnyWidget::Table(table) 
+
+    AnyWidget::Table(table)
 }
+
 
 pub fn map_list_styles<T>(items: &Vec<T>, select_idx: usize) -> Vec<Style>
 where

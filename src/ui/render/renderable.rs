@@ -120,10 +120,13 @@ where
         })?;
 
         let transition = control_handler(state);
-        if transition == Transition::Pop {
-            terminal.clear()?;
-        } 
+            
         if transition != Transition::Stay {
+            
+            // if let Transition::Push(v) = transition {
+            // } else {}
+            //
+            terminal.clear()?;
             return Ok(transition);
         }
     };

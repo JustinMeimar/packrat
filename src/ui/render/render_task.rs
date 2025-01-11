@@ -1,9 +1,10 @@
 use std::io;
 use tui::layout::Rect;
+use crate::model::convert::Storable;
 use crate::model::store::TaskStore;
 use crate::ui::view::Transition;
 use crate::ui::state::{TaskViewState, EntryViewState, CreateEntryViewState};
-use crate::ui::widgets::{list_factory, control_widget, map_list_styles};
+use crate::ui::widgets::{list_factory, control_widget, map_list_styles, item_table};
 use crate::model::task::Task;
 use crate::model::task_entry::TaskEntry;
 use std::time::Instant;
@@ -15,6 +16,14 @@ use crate::ui::render::renderable::{
     render_view, default_controls 
 };
 use crate::log::debug_log;
+///////////////////////////////////////////////////////////
+
+static COLUMN_HEADERS: [&str; 2] = ["Entry Date", "Preview"];
+static CONSTRAINTS: [Constraint; 2] = [
+    Constraint::Percentage(25),
+    Constraint::Percentage(75),
+];
+
 ///////////////////////////////////////////////////////////
 
 impl Renderable for TaskViewState {
@@ -31,19 +40,22 @@ impl Renderable for TaskViewState {
             .split(frame)
     }
 
-    // Render the main view controls and the list of tasks
+    // Render the main view controls and the list of tasks    
     fn widgets(&mut self) -> io::Result<Vec<AnyWidget>> {
-           
-        let task_items: Vec<TaskEntry> = TaskStore::instance()
-            .get_prefix(TaskEntry::key_task(self.task.id))
-            .unwrap();  
-         
-        let task_styles = map_list_styles(&task_items, self.selector.idx); 
-        let task_widget = list_factory(task_items, task_styles, self.task.name.clone());
-         
-        Ok(vec![control_widget(), task_widget])
-    } 
+        // Example: tasks is a Vec in your struct, but we pass a slice of it.
+        let tasks_slice = &self.items[..];
 
+        // Pass slices to item_table
+        let entries_widget = item_table(
+            tasks_slice,
+            &COLUMN_HEADERS,
+            &CONSTRAINTS,
+            self.selector.idx,
+        );
+
+        Ok(vec![control_widget(), entries_widget])
+    }
+ 
     /// Check the poll interval 
     fn poll(&mut self) {
          if self.last_poll_time.elapsed() >= self.poll_interval {

@@ -5,6 +5,7 @@ use chrono::{Local, NaiveDate};
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 use std::fmt::Display;
+use chrono::{DateTime, Utc};
 use crate::model::convert::Storable;
 
 use super::{store::TaskStore, task_entry::TaskEntry}; 
@@ -14,7 +15,7 @@ pub struct Task {
     pub id: uuid::Uuid,
     pub name: String,
     pub desc: String,
-    pub created_date: NaiveDate,
+    pub timestamp: DateTime<Utc>,
 }
 
 impl Task {
@@ -24,7 +25,7 @@ impl Task {
             id: Uuid::new_v4(),
             name: name.into(),
             desc: desc.into(),
-            created_date: Local::today().naive_local(),
+            timestamp: Utc::now(),
         }
     }
     
@@ -43,7 +44,7 @@ impl Task {
     /// stateless key pattern for task entries for a specific task
     pub fn key_task<S: Into<String> + Display>(task_id: S) -> String {
         format!("task:{}", task_id)
-    } 
+    }     
 }
 
 impl Display for Task {
@@ -53,6 +54,18 @@ impl Display for Task {
 }
 
 impl Storable for Task {
+    
+    fn get_display_fields(&self) -> Vec<String> {
+        vec![self.name.clone(), self.get_timestamp(), self.desc.clone()]
+    }
+
+    ///
+    fn get_timestamp(&self) -> String {
+        format!("{}",
+            self.timestamp.format("%Y-%m-%d %H:%M:%S"),
+        )
+    }
+
     fn to_key(&self) -> String {
         format!("task:{}", self.id)
     }

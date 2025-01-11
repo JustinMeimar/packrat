@@ -3,7 +3,7 @@ use tui::layout::Rect;
 use crate::model::store::TaskStore;
 use crate::ui::view::Transition;
 use crate::ui::state::{CreateTaskViewState, DeleteViewState, MainViewState, TaskViewState};
-use crate::ui::widgets::{list_factory, control_widget, map_list_styles, task_table};
+use crate::ui::widgets::{list_factory, control_widget, map_list_styles, item_table};
 use crate::model::task::Task;
 use std::time::Instant;
 use tui::layout::{Constraint, Layout};
@@ -13,6 +13,17 @@ use crate::ui::render::renderable::{
     Renderable, ControlOption, AnyWidget,
     render_view, default_controls 
 };
+
+///////////////////////////////////////////////////////////
+    
+/// Table rendering constants, static lifetimes are useful for borrow
+/// only TUI api
+static COLUMN_HEADERS: [&str; 3] = ["Habit", "Created", "Description"];
+static CONSTRAINTS: [Constraint; 3] = [
+    Constraint::Percentage(33),
+    Constraint::Percentage(33),
+    Constraint::Percentage(33),
+];
 
 ///////////////////////////////////////////////////////////
 
@@ -28,11 +39,10 @@ impl Renderable for MainViewState {
     /// Render the main view controls and the list of tasks
     fn widgets(&mut self) -> io::Result<Vec<AnyWidget>> {
                   
-        let task_items: Vec<Task> = TaskStore::instance()
-            .get_prefix(Task::key_all())
-            .unwrap();
-            
-        let task_widget = task_table(task_items, self.selector.idx);
+        let task_slice = &self.items[..];
+
+        let task_widget = item_table(
+            task_slice, &COLUMN_HEADERS, &CONSTRAINTS, self.selector.idx);
         
         Ok(vec![control_widget(), task_widget])
     } 
