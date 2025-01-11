@@ -8,7 +8,8 @@ use std::{error::Error, io::{self, stdout}};
 /// Used to manage 
 use crossterm::{
     execute,
-    terminal::{enable_raw_mode,disable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{enable_raw_mode,disable_raw_mode,
+               EnterAlternateScreen, LeaveAlternateScreen},
     cursor::{Show, Hide},
 };
 

@@ -52,6 +52,16 @@ pub struct CreateEntryViewState {
     pub active_input: usize,
 }
 
+#[derive(Debug, PartialEq)]
+pub struct DeleteViewState<T> {
+    pub delete_item: T,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct EditViewState<T> {
+    pub edit_item: T,
+}
+
 ///////////////////////////////////////////////////////////
 
 impl SelectionState {
@@ -150,6 +160,22 @@ impl CreateEntryViewState {
                 String::from("Entry Date Time")
             ],
             active_input: 0
+        }
+    }
+}
+
+impl<T> DeleteViewState<T> {
+    pub fn new(delete_item: T) -> Self {
+        DeleteViewState {
+            delete_item,
+        }
+    }
+}
+
+impl<T> EditViewState<T> {
+    pub fn new(edit_item: T) -> Self {
+        EditViewState {
+            edit_item,
         }
     }
 }

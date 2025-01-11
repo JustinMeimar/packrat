@@ -6,8 +6,6 @@ use std::fmt::Display;
 
 pub trait Storable: Sized + Display {
     
-    // fn new() -> Self;
-    
     // get unique representation
     fn to_key(&self) -> String;
 

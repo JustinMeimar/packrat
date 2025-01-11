@@ -74,6 +74,9 @@ pub fn default_controls(selector: &mut SelectionState) -> ControlOption {
     let event: Event = event::read().unwrap();
     match event {
 
+        // Event::Key(KeyEvent { code: KeyCode::Char('q'), .. })
+        //     => ControlOption::T(Transition::Push()),
+
         Event::Key(KeyEvent { code: KeyCode::Char('q'), .. }) 
             => ControlOption::T(Transition::Quit), 
         
@@ -117,8 +120,10 @@ where
         })?;
 
         let transition = control_handler(state);
-        if transition != Transition::Stay {
+        if transition == Transition::Pop {
             terminal.clear()?;
+        } 
+        if transition != Transition::Stay {
             return Ok(transition);
         }
     };

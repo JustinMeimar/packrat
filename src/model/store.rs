@@ -83,9 +83,11 @@ impl TaskStore {
             .map(|bytes| T::from_bytes(&bytes).map_err(|e| StoreError::from(e)))
             .transpose()
     }
+    
 
     /// 
-    pub fn delete_item<T: Storable>(&self, item: T) -> Result<(), StoreError> {
+    pub fn delete_item<T: Storable>(&self, item: &T) -> Result<(), StoreError> {
+        
         self.db
             .lock()
             .unwrap()

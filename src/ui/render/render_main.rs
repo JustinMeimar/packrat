@@ -2,7 +2,7 @@ use std::io;
 use tui::layout::Rect;
 use crate::model::store::TaskStore;
 use crate::ui::view::Transition;
-use crate::ui::state::{TaskViewState, MainViewState, CreateTaskViewState};
+use crate::ui::state::{CreateTaskViewState, DeleteViewState, MainViewState, TaskViewState};
 use crate::ui::widgets::{list_factory, control_widget, map_list_styles, task_table};
 use crate::model::task::Task;
 use std::time::Instant;
@@ -72,7 +72,16 @@ impl Renderable for MainViewState {
             // A custom case occurred
             ControlOption::E(e) => { 
                 match e { 
-                    /// What to do on "edit"
+                    
+                    Event::Key(KeyEvent { code: KeyCode::Char('d'), .. })
+                        => {
+                            let item = self.items[self.selector.idx].clone();
+                            Transition::Push(
+                                View::DeleteView(
+                                    DeleteViewState::new(item)
+                                )
+                            )
+                        }                    /// What to do on "edit"
                     Event::Key(KeyEvent { code: KeyCode::Char('e'), .. }) 
                         => {
                             Transition::Stay

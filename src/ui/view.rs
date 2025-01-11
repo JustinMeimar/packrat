@@ -2,8 +2,7 @@
 
 use std::io;
 use crate::model::task_entry::TaskEntry;
-use crate::ui::state::{EntryViewState, MainViewState, TaskViewState,
-                       CreateTaskViewState, CreateEntryViewState};
+use crate::ui::state::*;
 use crate::ui::render::renderable::Renderable;
 use crate::ui::render::render_create::FormRenderable;
 use crate::model::task::Task;
@@ -16,6 +15,8 @@ pub enum View {
     MainView(MainViewState),                // list of tasks
     TaskView(TaskViewState),                // list of task entries
     EntryView(EntryViewState),              // view an entry (vim)
+    DeleteView(DeleteViewState<Task>),      // delete a task 
+    EditView(EditViewState<Task>),          // edit a task
     CreateTaskView(CreateTaskViewState),    // form for new Task
     CreateEntryView(CreateEntryViewState),  // form for new TaskEntry
 }
@@ -49,13 +50,16 @@ impl App {
         
         loop {
 
-            // render the view and retrieve next transition
             let transition = match self.view_stack.last_mut() { 
-                Some(View::MainView(ms)) => ms.render()?,
-                Some(View::TaskView(ts)) => ts.render()?,
-                Some(View::EntryView(es)) => es.render()?,
-                Some(View::CreateTaskView(cts)) => cts.render()?,
+                
+                // render the view and retrieve next transition
+                Some(View::MainView(ms))        => ms.render()?,
+                Some(View::TaskView(ts))        => ts.render()?,
+                Some(View::EntryView(es))       => es.render()?,
+                Some(View::CreateTaskView(cs))  => cs.render()?,
+                Some(View::DeleteView(ds))      => ds.render()?,
                 // Some(View::CreateEntryView(ces)) => ces.render()?,
+                
                 _ => panic!("This is a packrat bug!")
             };
             

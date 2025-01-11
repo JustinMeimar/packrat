@@ -17,6 +17,7 @@ pub enum UserAction {
     Select,
     New,
     Edit,
+    Delete,
     Back,
     Quit,
 }
@@ -27,6 +28,7 @@ impl UserAction {
             UserAction::Select,
             UserAction::New,
             UserAction::Edit,
+            UserAction::Delete,
             UserAction::Back,
             UserAction::Quit,
         ]
@@ -43,6 +45,7 @@ impl fmt::Display for UserAction {
             UserAction::Select => "Select (s)",  
             UserAction::Back => "Back (b)",  
             UserAction::New => "New (n)",  
+            UserAction::Delete => "Delete (d)",  
             UserAction::Edit => "Edit (e)",  
             UserAction::Quit => "Quit (q)",  
         };
