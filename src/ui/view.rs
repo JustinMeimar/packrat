@@ -1,22 +1,45 @@
 /// view.rs
 
 use std::io;
+use crate::model::convert::Storable;
 use crate::ui::state::*;
 use crate::ui::render::renderable::Renderable;
 use crate::ui::render::render_create::FormRenderable;
 use crate::model::task::Task;
+use std::fmt::{Display, Debug};
 
 ///////////////////////////////////////////////////////////
 
 /// TODO: Fix some confusing naming
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub enum View {
     MainView(MainViewState),                // list of tasks
     TaskView(TaskViewState),                // list of task entries
     EntryView(EntryViewState),              // view an entry (vim)
-    DeleteView(DeleteViewState<Task>),      // delete a task 
-    EditView(EditViewState<Task>),          // edit a task
+    DeleteView(Box<dyn GenericDeleteView>), // type erased delete view 
     CreateTaskView(CreateTaskViewState),    // form for new Task
+}
+
+// Erase the type of DeleteViewState<T> with a wrapper trait that dynamically
+// dispatches rendering. This lets us keep the View enum non-generic.
+pub trait GenericDeleteView: Renderable + Debug {}
+
+/// Implement the wrapper trait 
+impl<T: Storable + Debug + 'static> GenericDeleteView for DeleteViewState<T> {}
+
+/// Since type inside a DeleteView is realized at runtime, we cannot derive PartialEq
+/// for View at compile time. Forced to implement manually.
+impl PartialEq for View {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (View::MainView(a), View::MainView(b)) => a == b,
+            (View::TaskView(a), View::TaskView(b)) => a == b,
+            (View::EntryView(a), View::EntryView(b)) => a == b,
+            (View::CreateTaskView(a), View::CreateTaskView(b)) => a == b,
+            (View::DeleteView(_), View::DeleteView(_)) => false,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]

@@ -2,7 +2,7 @@ use std::io;
 use tui::layout::Rect;
 use crate::model::store::TaskStore;
 use crate::ui::view::Transition;
-use crate::ui::state::{TaskViewState, EntryViewState};
+use crate::ui::state::{TaskViewState, EntryViewState, DeleteViewState};
 use crate::ui::widgets::{control_widget, item_table};
 use crate::model::task_entry::TaskEntry;
 use std::time::Instant;
@@ -80,10 +80,20 @@ impl Renderable for TaskViewState {
             // A custom case occurred
             ControlOption::E(e) => { 
                 match e {  
+                    // What to do on "delete"
+                    Event::Key(KeyEvent { code: KeyCode::Char('d'), .. })
+                        => {
+                            let item = self.items[self.selector.idx].clone();
+                            Transition::Push(
+                                View::DeleteView(
+                                    Box::new(DeleteViewState::new(item))
+                                )
+                            )
+                        }
+
                     // What to do on "new"
                     Event::Key(KeyEvent { code: KeyCode::Char('n'), .. }) 
                         => {
-                            debug_log(&format!("task id: {}", self.task.id)); 
                             // TODO: Decide if we want to create a dialogue box
                             // for new entries, or automatically creating one is sufficient.
                             // For now, just create a entry directly 

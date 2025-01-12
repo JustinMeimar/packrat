@@ -83,15 +83,17 @@ impl Renderable for MainViewState {
             ControlOption::E(e) => { 
                 match e { 
                     
+                    // What to do on "delete"
                     Event::Key(KeyEvent { code: KeyCode::Char('d'), .. })
                         => {
                             let item = self.items[self.selector.idx].clone();
                             Transition::Push(
                                 View::DeleteView(
-                                    DeleteViewState::new(item)
+                                    Box::new(DeleteViewState::new(item))
                                 )
                             )
-                        }                    /// What to do on "edit"
+                        }
+                    // What to do on "edit"
                     Event::Key(KeyEvent { code: KeyCode::Char('e'), .. }) 
                         => {
                             let item = self.items[self.selector.idx].clone();
