@@ -2,6 +2,10 @@ use std::sync::{Mutex, OnceLock};
 use crate::model::convert::Storable;
 use sled::IVec;
 use serde_json::Error as SerdeError;
+use std::error::Error;
+use csv::Writer;
+use crate::model::task::Task;
+use crate::model::task_entry::TaskEntry;
 
 ///////////////////////////////////////////////////////////
 /// Custom error enum to aggregate error types
@@ -47,7 +51,7 @@ impl TaskStore {
         INSTANCE.get_or_init(|| TaskStore::new(db_path))
     } 
     
-    /// 
+    /// Idempotent PUT 
     pub fn put<T: Storable>(&self, item: T) -> Result<T, StoreError> { 
         let bytes = item.to_bytes()?;
          
@@ -57,7 +61,7 @@ impl TaskStore {
         Ok(item)
     }
     
-    ///
+    /// Key ranged GET for retreiving multiple entities
     pub fn get_prefix<T>(&self, prefix: impl Into<String> + AsRef<[u8]>)
         -> Result<Vec<T>, StoreError> 
     where
@@ -77,7 +81,7 @@ impl TaskStore {
         Ok(results)
     } 
 
-    /// 
+    /// GET a specific value from a key
     pub fn get<T: Storable>(&self, key: String) -> Result<Option<T>, StoreError> {
         
         self.db
@@ -90,9 +94,10 @@ impl TaskStore {
     }
     
 
-    /// 
+    /// Delete a storable item
     pub fn delete_item<T: Storable>(&self, item: &T) -> Result<(), StoreError> {
         
+        /// TODO: Handle cascade!
         self.db
             .lock()
             .unwrap()
@@ -100,7 +105,7 @@ impl TaskStore {
         Ok(()) 
     }
    
-    ///
+    /// Delete 
     pub fn delete_key(&self, key: String) -> Result<(), StoreError> {
         self.db
             .lock()
@@ -125,6 +130,48 @@ impl TaskStore {
                 println!("Key: {}, Value: {}", key_str, value_str);
             }
         }
+    }
+    
+    /// export the DB to a CSV
+    pub fn to_csv(&self, file_path: &str) -> Result<(), Box<dyn Error>>{
+        
+        let mut writer = csv::Writer::from_path(file_path)?;
+        let mut columns: Vec<Vec<String>> = vec![]; 
+        let tasks: Vec<Task> = self.get_prefix(Task::key_all()).unwrap(); 
+    
+        for task in &tasks {
+            let entries: Vec<String> = task.get_entries()
+                .iter()
+                .map(|e| e.get_content().replace("\n", ""))
+                .collect();
+            
+            columns.push(entries); 
+        }
+        
+        // determine max number of entries for task, which gives n rows
+        let max_len = columns.iter().map(|col| col.len()).max().unwrap_or(0);
+        
+        // write header row
+        let names: Vec<&String> = tasks.iter().map(|t| &t.name).collect();
+        writer.write_record(&names);
+
+        // write each row into the CSV
+        for i in 0..max_len {
+ 
+            let row: Vec<String> = columns.iter()
+                .map(|col| col.get(i).cloned().unwrap_or_else(|| "".to_string()))
+                .collect();
+            
+            writer.write_record(&row);
+        }
+         
+        Ok(()) 
+    }
+    
+    /// export the DB to a JSON file
+    pub fn to_json(&self, file_path: &str) -> Result<(), Box<dyn Error>> { 
+        panic!("Not implemented error!");
+        Ok(()) 
     }
 }
 

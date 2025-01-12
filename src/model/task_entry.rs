@@ -38,6 +38,12 @@ impl TaskEntry {
     pub fn key_task_entry<S: Into<String> + Display>(task_id: S, entry_id: S) -> String {
         format!("task_entry:{}:{}", task_id, entry_id)
     }
+    
+    /// return a string version of the content
+    pub fn get_content(&self) -> String {
+
+        String::from_utf8_lossy(&self.content).to_string()  
+    }
 }
 
 impl Display for TaskEntry {
@@ -54,8 +60,7 @@ impl Storable for TaskEntry {
  
     /// get a vector of fields that are for display     
     fn get_display_fields(&self) -> Vec<String> { 
-        let content = String::from_utf8_lossy(&self.content).to_string() + "...";  
-        vec![self.get_timestamp(), content]
+        vec![self.get_timestamp(), self.get_content()]
     }
 
     /// datetime object was created

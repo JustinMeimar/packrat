@@ -1,44 +1,17 @@
-use packrat::model::store::TaskStore;
-use packrat::ui::view;
-use std::{error::Error, io::stdout};
+/// main.rs
 
-/// Used to manage 
-use crossterm::{
-    execute,
-    terminal::{enable_raw_mode,disable_raw_mode,
-               EnterAlternateScreen, LeaveAlternateScreen},
-    cursor::{Show, Hide},
-};
+use std::{error::Error, io::stdout};
+use packrat::cli::{CLI, Mode};
+use clap::Parser;
 
 ///////////////////////////////////////////////////////////
 
 fn main() -> Result<(), Box<dyn Error>> {
+   
+    let cli = CLI::parse_with_default();   
     
-    // enter raw mode
-    enable_raw_mode()?;
+    cli.mode.unwrap().run()?; 
 
-    // switch to alternate screen, hide cursor, etc.
-    execute!(
-        stdout(),
-        EnterAlternateScreen,
-        Hide
-    )?;
-       
-    // run the app
-    let mut app = view::App::new();    
-    app.run();
-
-    // disable raw mode before exit
-    disable_raw_mode()?;
-
-    // leave alternate screen, show cursor again
-    execute!(
-        stdout(),
-        LeaveAlternateScreen,
-        Show
-    )?;
-        
-    TaskStore::instance().dump();
     Ok(())
 }
 

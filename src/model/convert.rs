@@ -20,5 +20,8 @@ pub trait Storable: Sized + Display {
     
     // serialzie object into bytes for datastore
     fn to_bytes(&self) -> serde_json::Result<Vec<u8>>;
+
+    // get dependend objects for CASCADE delete
+    fn get_dependents(&self) { panic!("Not implemented"); }
 }
 
