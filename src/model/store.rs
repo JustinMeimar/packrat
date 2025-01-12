@@ -62,15 +62,20 @@ impl TaskStore {
         -> Result<Vec<T>, StoreError> 
     where
         T: Storable,
+    
     { 
-        self.db
+        let mut results: Vec<T> = self.db
             .lock()
             .unwrap()
             .scan_prefix(prefix)
-            .filter_map(|x| x.ok()) // only take some values
-            .map(|(_k, v)| T::from_bytes(&v).map_err(|e| StoreError::from(e)))
-            .collect()
-    }
+            .filter_map(|x| x.ok())
+            .map(|(_k, v)| T::from_bytes(&v).map_err(StoreError::from))
+            .collect::<Result<Vec<T>, StoreError>>()?;
+
+        results.sort_by(|a, b| b.get_timestamp().cmp(&a.get_timestamp()));
+        
+        Ok(results)
+    } 
 
     /// 
     pub fn get<T: Storable>(&self, key: String) -> Result<Option<T>, StoreError> {

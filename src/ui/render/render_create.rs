@@ -76,6 +76,8 @@ impl FormRenderable for CreateTaskViewState {
         let mut terminal = render_view_startup()?;
         let mut transition = Transition::Stay; 
 
+        
+
         let result = loop {
             terminal.draw(|f| {
                 
@@ -85,7 +87,6 @@ impl FormRenderable for CreateTaskViewState {
                 widgets.into_iter().enumerate().for_each(|(i, w)| {
                     f.render_widget(w, chunks[i]);
                 });
- 
             })?;
             
             transition = self.controller(); 

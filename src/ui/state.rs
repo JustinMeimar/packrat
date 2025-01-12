@@ -109,10 +109,6 @@ impl TaskViewState {
             .get_prefix(TaskEntry::key_task(task.id))
             .unwrap();
         
-        task_entries.sort_by(
-            |a, b| b.get_timestamp().cmp(&a.get_timestamp())
-        );
-
         assert!(task_entries.len() >= 0);
 
         TaskViewState {

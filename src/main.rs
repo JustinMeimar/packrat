@@ -1,6 +1,6 @@
 use packrat::model::store::TaskStore;
 use packrat::ui::view;
-use std::{error::Error, io::{stdout}};
+use std::{error::Error, io::stdout};
 
 /// Used to manage 
 use crossterm::{
