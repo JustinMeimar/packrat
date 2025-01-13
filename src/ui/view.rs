@@ -17,7 +17,8 @@ pub enum View {
     TaskView(TaskViewState),                // list of task entries
     EntryView(EntryViewState),              // view an entry (vim)
     CreateTaskView(CreateTaskViewState),    // form for new Task
-    
+    PopUpView(PopUpViewState),
+
     // dynamic views
     ConfigView(Box<dyn DynView>),
     DeleteView(Box<dyn DynView>), // type erased delete view 
@@ -69,6 +70,7 @@ impl App {
                 Some(View::CreateTaskView(cs))  => cs.render()?,
                 Some(View::DeleteView(ds))      => ds.render()?,
                 Some(View::ConfigView(cs))      => cs.render()?,
+                Some(View::PopUpView(ps))       => ps.render()?,  
                 _ => panic!("This is a packrat bug!")
             };
             

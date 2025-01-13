@@ -30,5 +30,8 @@ pub trait Storable: Sized + Display {
 
     /// get dependend objects for CASCADE delete
     fn get_dependents(&self) { panic!("Not implemented"); }
+    
+    //
+    fn is_legal_update_from(&self, other: &Self) -> bool { true } 
 }
 

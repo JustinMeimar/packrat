@@ -35,7 +35,7 @@ pub struct Task {
     pub name: String,
     pub desc: String,
     pub timestamp: DateTime<Utc>,
-    pub ty: TaskTy,
+    pub task_type: TaskTy,
     pub eval_period: EvalPeriod
 }
 
@@ -47,7 +47,7 @@ impl Task {
             name: name.into(),
             desc: desc.into(),
             timestamp: Utc::now(),
-            ty: TaskTy::Raw,
+            task_type: TaskTy::Raw,
             eval_period: EvalPeriod::Daily,
         }
     }
@@ -108,6 +108,14 @@ impl Storable for Task {
         let task = toml::from_str(&toml_string)?;
         Ok(task)
     } 
+
+    fn is_legal_update_from(&self, other: &Self) -> bool {
+        if other.id == self.id
+            && other.timestamp == self.timestamp {
+            return true;
+        }
+        return false;
+    }
 }
 
 impl Display for Task {

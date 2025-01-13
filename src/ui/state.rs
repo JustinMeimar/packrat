@@ -47,6 +47,11 @@ pub struct CreateTaskViewState {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct PopUpViewState {
+    pub text: String
+}
+
+#[derive(Debug, PartialEq)]
 pub struct DeleteViewState<T> {
     pub delete_item: T,
 }
@@ -138,11 +143,19 @@ impl CreateTaskViewState {
         let inputs = vec![item.name.clone(), item.desc.clone()];
         CreateTaskViewState {
             item,
-            inputs, 
+            inputs,
             active_input: 0,
             is_edit,
         }
     }
+}
+
+impl PopUpViewState {
+    pub fn new(text: String) -> Self {
+        PopUpViewState {
+            text,
+        }
+    } 
 }
 
 impl<T> DeleteViewState<T> {
