@@ -51,6 +51,11 @@ pub struct DeleteViewState<T> {
     pub delete_item: T,
 }
 
+#[derive(Debug, PartialEq)]
+pub struct ConfigViewState<T> {
+    pub config_item: T,
+}
+
 ///////////////////////////////////////////////////////////
 
 impl SelectionState {
@@ -147,4 +152,13 @@ impl<T> DeleteViewState<T> {
         }
     }
 }
+
+impl<T> ConfigViewState<T> {
+    pub fn new(config_item: T) -> Self {
+        ConfigViewState {
+            config_item,
+        }
+    }
+}
+
 

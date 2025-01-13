@@ -1,4 +1,5 @@
 use std::fmt;
+use std::error::Error;
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
@@ -49,10 +50,7 @@ impl TaskEntry {
 impl Display for TaskEntry {
     
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "• {}\t{}...",
-            self.timestamp.format("%Y-%m-%d %H:%M:%S"),
-            String::from_utf8_lossy(&self.content)
-        ) 
+        write!(f, "{}",self.id) 
     } 
 }
 
@@ -84,4 +82,15 @@ impl Storable for TaskEntry {
     fn to_bytes(&self) -> serde_json::Result<Vec<u8>> {
         serde_json::to_vec(self) 
     }
+    
+    fn to_toml(&self) -> Result<String, Box<dyn Error>> {
+        let toml_string = toml::to_string(self)?;
+        Ok(toml_string)
+    }
+
+    fn from_toml(toml_string: String) -> Result<Self, Box<dyn Error>> {
+        let task = toml::from_str(&toml_string)?;
+        Ok(task)
+    }
 }
+

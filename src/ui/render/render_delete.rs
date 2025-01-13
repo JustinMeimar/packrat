@@ -21,7 +21,7 @@ impl<T: Display + Storable> Renderable for DeleteViewState<T> {
     ///
     fn widgets(&mut self) -> io::Result<Vec<AnyWidget>> {
             
-        let delete_text = format!("Delete item: {}? (Y/N)", self.delete_item);
+        let delete_text = format!("Delete item: {}?\n(Y/N)", self.delete_item);
 
         Ok(vec![
             AnyWidget::Paragraph(

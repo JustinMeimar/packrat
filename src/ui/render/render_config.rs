@@ -1,0 +1,38 @@
+use std::io;
+use std::io::{Write, Read};
+use std::fs::File;
+use std::process::Command;
+use std::fmt::Debug;
+use tempfile::NamedTempFile;
+use crate::log::debug_log;
+use crate::ui::editor::open_editor;
+use crate::model::convert::Storable;
+use crate::model::store::TaskStore;
+use crate::ui::view::Transition;
+use crate::ui::state::ConfigViewState;
+use crate::ui::render::renderable::Renderable;
+
+///////////////////////////////////////////////////////////
+
+impl<T> Renderable for ConfigViewState<T> where T: Storable + Debug {
+
+    fn render(&mut self) -> io::Result<Transition> {
+        
+        let item_config = self.config_item.to_toml().unwrap();  
+        let updated_config = open_editor(&item_config.as_bytes()).unwrap();
+        
+        match T::from_toml(updated_config) {
+            Ok(t) => {
+                debug_log(&format!("{:?}", t));
+
+                TaskStore::instance().put(t);
+            },
+            Err(_) => {
+                panic!("patrack bug!")
+            }
+        }
+        
+        Ok(Transition::Pop)
+    }
+}
+
